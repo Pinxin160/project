@@ -19,7 +19,7 @@ def login_screen():
 
     main_window = tk.Tk()
     main_window.title("登入")
-    main_window.geometry("400x300")
+    main_window.geometry("400x400")
     main_window.configure(bg="#f5f5f5")  # 更改背景顏色
 
     # 圖案
