@@ -1,15 +1,22 @@
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
-from user_manager import initialize_data, login, register
+from user_manager import initialize_data, login, register, load_users
 
 def login_screen():
+
     def handle_login():
         username = username_entry.get()
         password = password_entry.get()
         if login(username, password):
+
+            # 取得玩家資料
+            users = load_users()
+            current_user = next(user for user in users["users"] if user["username"] == username)
+
             messagebox.showinfo("成功", f"歡迎，{username}！")
             main_window.destroy()
+            game_screen(current_user)
         else:
             messagebox.showerror("錯誤", "帳號或密碼錯誤！")
 
@@ -40,7 +47,9 @@ def login_screen():
     
     main_window.mainloop()
 
+
 def register_screen():
+
     def handle_register():
         username = username_entry.get()
         password = password_entry.get()
@@ -80,6 +89,40 @@ def register_screen():
     tk.Button(main_window, text="返回登入", command=switch_to_login, font=("Arial", 12)).grid(row=4, column=0, columnspan=2, pady=10)
     
     main_window.mainloop()
+
+
+def game_screen(current_user):
+
+    def start_game(game_name):
+        messagebox.showinfo("開始遊戲", f"{game_name} 開始！")
+        # 根據遊戲名稱進行相應的遊戲邏輯處理
+
+    def logout():
+        main_window.destroy()
+        login_screen()  # 登出後返回登入界面
+
+    main_window = tk.Tk()
+    main_window.title("遊戲選擇")
+    main_window.geometry("400x400")
+    main_window.configure(bg="#f5f5f5")
+
+    # 顯示玩家資訊
+    player_info_label = f"玩家名稱: {current_user['username']}\n等級: {current_user['level']}\n分數: {current_user['score']}"
+    tk.Label(main_window, text=player_info_label, font=("Arial", 14), bg="#f5f5f5").grid(row=0, column=0, columnspan=2, pady=20)
+
+    # 顯示遊戲選擇界面標題
+    tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18)).grid(row=0, column=5, columnspan=2, pady=20)
+
+    # 遊戲選項按鈕
+    tk.Button(main_window, text="遊戲一", command=lambda: start_game("遊戲一"), font=("Arial", 12)).grid(row=1, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="遊戲二", command=lambda: start_game("遊戲二"), font=("Arial", 12)).grid(row=2, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="遊戲三", command=lambda: start_game("遊戲三"), font=("Arial", 12)).grid(row=3, column=0, columnspan=2, pady=10)
+    
+    # 登出按鈕
+    tk.Button(main_window, text="登出", command=logout, font=("Arial", 12)).grid(row=4, column=0, columnspan=2, pady=10)
+
+    main_window.mainloop()
+
 
 initialize_data()
 login_screen()
