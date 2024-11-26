@@ -44,6 +44,12 @@ def register_screen():
     def handle_register():
         username = username_entry.get()
         password = password_entry.get()
+        confirm_password = confirm_password_entry.get()
+
+        if password != confirm_password:
+            messagebox.showinfo("失敗", "密碼與確認密碼不相符")
+            return
+
         if register(username, password):
             messagebox.showinfo("成功", "註冊成功！請重新登入。")
             main_window.destroy()
@@ -65,9 +71,13 @@ def register_screen():
     tk.Label(main_window, text="密碼", font=("Arial", 14)).grid(row=1, column=0, padx=10, pady=5)
     password_entry = tk.Entry(main_window, show="*", font=("Arial", 12))
     password_entry.grid(row=1, column=1, padx=10, pady=5)
+
+    tk.Label(main_window, text="確認密碼", font=("Arial", 14)).grid(row=2, column=0, padx=10, pady=5)
+    confirm_password_entry = tk.Entry(main_window, show="*", font=("Arial", 12))
+    confirm_password_entry.grid(row=2, column=1, padx=10, pady=5)
     
-    tk.Button(main_window, text="註冊", command=handle_register, font=("Arial", 12)).grid(row=2, column=0, columnspan=2, pady=10)
-    tk.Button(main_window, text="返回登入", command=switch_to_login, font=("Arial", 12)).grid(row=3, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="註冊", command=handle_register, font=("Arial", 12)).grid(row=3, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="返回登入", command=switch_to_login, font=("Arial", 12)).grid(row=4, column=0, columnspan=2, pady=10)
     
     main_window.mainloop()
 
