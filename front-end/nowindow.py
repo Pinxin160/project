@@ -1,66 +1,60 @@
-import json
-import os
+# main.py
+import tkinter as tk
+from tkinter import messagebox
+from user_manager import initialize_data, login, register
 
-FILE_PATH = "users.json"
-
-# 初始化使用者資料
-def initialize_data():
-    if not os.path.exists(FILE_PATH):
-        with open(FILE_PATH, 'w') as file:
-            json.dump({"users": []}, file)
-
-# 讀取使用者資料
-def load_users():
-    with open(FILE_PATH, 'r') as file:
-        return json.load(file)
-
-# 儲存使用者資料
-def save_users(data):
-    with open(FILE_PATH, 'w') as file:
-        json.dump(data, file)
-
-# 登入功能
-def login():
-    users = load_users()
-    username = input("請輸入帳號: ")
-    password = input("請輸入密碼: ")
-    for user in users["users"]:
-        if user["username"] == username and user["password"] == password:
-            print(f"登入成功！歡迎，{username}")
-            return user  # 回傳使用者資料
-    print("帳號或密碼錯誤！")
-    return None
-
-# 註冊功能
-def register():
-    users = load_users()
-    username = input("請創建帳號: ")
-    if any(user["username"] == username for user in users["users"]):
-        print("帳號已存在，請選擇其他名稱！")
-        return
-    password = input("請輸入密碼: ")
-    new_user = {"username": username, "password": password, "level": 1}
-    users["users"].append(new_user)
-    save_users(users)
-    print("註冊成功！")
-
-# 主選單
-def main_menu():
-    initialize_data()
-    while True:
-        print("1. 登入")
-        print("2. 註冊")
-        print("3. 離開")
-        choice = input("請選擇功能: ")
-        if choice == "1":
-            if login():
-                break  # 成功登入後退出選單
-        elif choice == "2":
-            register()
-        elif choice == "3":
-            print("感謝使用，再見！")
-            break
+def login_screen():
+    def handle_login():
+        username = username_entry.get()
+        password = password_entry.get()
+        if login(username, password):
+            messagebox.showinfo("成功", f"歡迎，{username}！")
+            main_window.destroy()
         else:
-            print("無效選擇，請重新輸入。")
+            messagebox.showerror("錯誤", "帳號或密碼錯誤！")
 
-main_menu()
+    def switch_to_register():
+        main_window.destroy()
+        register_screen()
+
+    main_window = tk.Tk()
+    main_window.title("登入")
+    tk.Label(main_window, text="帳號").grid(row=0, column=0)
+    username_entry = tk.Entry(main_window)
+    username_entry.grid(row=0, column=1)
+    tk.Label(main_window, text="密碼").grid(row=1, column=0)
+    password_entry = tk.Entry(main_window, show="*")
+    password_entry.grid(row=1, column=1)
+    tk.Button(main_window, text="登入", command=handle_login).grid(row=2, column=0, columnspan=2)
+    tk.Button(main_window, text="註冊", command=switch_to_register).grid(row=3, column=0, columnspan=2)
+    main_window.mainloop()
+
+def register_screen():
+    def handle_register():
+        username = username_entry.get()
+        password = password_entry.get()
+        if register(username, password):
+            messagebox.showinfo("成功", "註冊成功！請重新登入。")
+            main_window.destroy()
+            login_screen()
+        else:
+            messagebox.showerror("錯誤", "帳號已存在，請使用其他名稱！")
+
+    def switch_to_login():
+        main_window.destroy()
+        login_screen()
+
+    main_window = tk.Tk()
+    main_window.title("註冊")
+    tk.Label(main_window, text="帳號").grid(row=0, column=0)
+    username_entry = tk.Entry(main_window)
+    username_entry.grid(row=0, column=1)
+    tk.Label(main_window, text="密碼").grid(row=1, column=0)
+    password_entry = tk.Entry(main_window, show="*")
+    password_entry.grid(row=1, column=1)
+    tk.Button(main_window, text="註冊", command=handle_register).grid(row=2, column=0, columnspan=2)
+    tk.Button(main_window, text="返回登入", command=switch_to_login).grid(row=3, column=0, columnspan=2)
+    main_window.mainloop()
+
+initialize_data()
+login_screen()
