@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
-from user_manager import initialize_data, login, register, load_users
+from user_manager import initialize_data, login, register, load_users, save_users
 
 def login_screen():
 
@@ -101,6 +101,53 @@ def game_screen(current_user):
         main_window.destroy()
         login_screen()  # 登出後返回登入界面
 
+    # 修改密碼
+    def change_password():
+
+        def handle_change_password():
+            old_password = old_password_entry.get()
+            new_password = new_password_entry.get()
+            confirm_new_password = confirm_password_entry.get()
+
+            if old_password != current_user['password']:
+                messagebox.showerror("錯誤", "舊密碼錯誤！")
+                return
+
+            if new_password != confirm_new_password:
+                messagebox.showerror("錯誤", "新密碼與確認密碼不相符！")
+                return
+
+            # 更新密碼
+            users = load_users()
+            for user in users["users"]:
+                if user["username"] == current_user["username"]:
+                    user["password"] = new_password
+                    break
+            save_users(users)
+
+            messagebox.showinfo("成功", "密碼修改成功！")
+            change_password_window.destroy()
+
+        # 彈出修改密碼視窗
+        change_password_window = tk.Toplevel(main_window)
+        change_password_window.title("修改密碼")
+        change_password_window.geometry("300x200")
+
+        tk.Label(change_password_window, text="舊密碼", font=("Arial", 12)).grid(row=0, column=0, padx=10, pady=5)
+        old_password_entry = tk.Entry(change_password_window, show="*", font=("Arial", 12))
+        old_password_entry.grid(row=0, column=1, padx=10, pady=5)
+
+        tk.Label(change_password_window, text="新密碼", font=("Arial", 12)).grid(row=1, column=0, padx=10, pady=5)
+        new_password_entry = tk.Entry(change_password_window, show="*", font=("Arial", 12))
+        new_password_entry.grid(row=1, column=1, padx=10, pady=5)
+
+        tk.Label(change_password_window, text="確認密碼", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=5)
+        confirm_password_entry = tk.Entry(change_password_window, show="*", font=("Arial", 12))
+        confirm_password_entry.grid(row=2, column=1, padx=10, pady=5)
+
+        tk.Button(change_password_window, text="確認修改", command=handle_change_password, font=("Arial", 12)).grid(row=3, column=0, columnspan=2, pady=10)
+    
+
     main_window = tk.Tk()
     main_window.title("遊戲選擇")
     main_window.geometry("400x400")
@@ -112,6 +159,9 @@ def game_screen(current_user):
 
     # 顯示遊戲選擇界面標題
     tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18)).grid(row=0, column=5, columnspan=2, pady=20)
+
+    # 修改密碼按鈕
+    tk.Button(main_window, text="修改密碼", command=change_password, font=("Arial", 12)).grid(row=1, column=8, columnspan=2, pady=10)
 
     # 遊戲選項按鈕
     tk.Button(main_window, text="遊戲一", command=lambda: start_game("遊戲一"), font=("Arial", 12)).grid(row=1, column=0, columnspan=2, pady=10)
