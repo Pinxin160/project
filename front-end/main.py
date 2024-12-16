@@ -158,7 +158,7 @@ def game_screen(current_user):
     tk.Label(main_window, text=player_info_label, font=("Arial", 14), bg="#f5f5f5").grid(row=0, column=0, columnspan=2, pady=20)
 
     # 顯示遊戲選擇界面標題
-    tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18)).grid(row=0, column=5, columnspan=2, pady=20)
+    tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18)).grid(row=0, column=10, columnspan=2, pady=20)
 
     # 修改密碼按鈕
     tk.Button(main_window, text="修改密碼", command=change_password, font=("Arial", 12)).grid(row=1, column=8, columnspan=2, pady=10)
