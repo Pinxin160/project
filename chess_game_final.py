@@ -199,8 +199,8 @@ class ChessGame:
         # 如果已經選擇了棋子，並且玩家點擊目標位置
         if self.selected_piece_id:
             if self.pieces[self.selected_piece_id]['position'] == (x, y):
-                print("玩家強制結束這回合。")
-                self.end_turn()
+                self.selected_piece_id = None
+                messagebox.showerror("錯誤", "取消選擇這顆選別顆。")
             elif self.move_piece(self.selected_piece_id, (x, y)):
                 print("這回合結束。") 
                 self.end_turn()
@@ -377,7 +377,6 @@ class ChessGame:
             self.death_pieces_player[target_piece_id] = self.pieces[target_piece_id]  
         else:
             self.death_pieces_computer[target_piece_id] = self.pieces[target_piece_id]
-        self.check_game_over() #吃掉後判斷是否其中一方已經沒旗子了
         del self.pieces[target_piece_id]  # 更新棋盤，移除被吃的棋子
 
         # 更新攻擊方棋子的位置和畫布(棋盤)
@@ -385,6 +384,7 @@ class ChessGame:
         self.canvas.move(self.pieces[from_piece_id]["canvas_id"], tx - fx, ty - fy)
         self.canvas.move(self.pieces[from_piece_id]["text_id"], tx - fx, ty - fy)
         self.canvas.update_idletasks()
+        self.check_game_over() #吃掉後判斷是否其中一方已經沒旗子了
         if self.current_turn == 'computer': self.root.after(1000) # try delay
     
     def capture_piece(self, from_piece_id, target_piece_id):
@@ -545,7 +545,7 @@ class ChessGame:
         print("電腦目前已翻開的棋子有: ", revealed_pieces_name)
         self.root.after(1000)
         
-        # 2. 如果有已翻開的棋子: 先嘗試吃子，若沒有能吃的再純移動
+        # 2. 如果有已翻開的棋子: 先嘗試吃子
         if revealed_pieces:
             revealed_pieces_sorted = self.sort_pieces(revealed_pieces) # 從等級最大的開始嘗試吃子
             for piece_id in revealed_pieces_sorted:
@@ -574,14 +574,14 @@ class ChessGame:
                                 if surrounding_piece['reveal']: # 先吃已揭示的敵方棋子
                                     print("目標候選為已揭示的敵方棋子")
                                     can_capture = False # 判斷特殊吃子規則
-                                    if current_piece['name'] in ["卒", "兵"] and surrounding_piece['name'] in ["帥", "將"]:
+                                    if self.piece_ranks[current_piece['name']] >= self.piece_ranks[surrounding_piece['name']]:
+                                        if current_piece['name'] in ["帥", "將"] and surrounding_piece['name'] in ["卒", "兵"]:
+                                            print("電腦: 帥(將) 不能吃 卒(兵)。")
+                                        else:
+                                            print("電腦: 我方棋子吃掉敵方棋子")
+                                            can_capture = True
+                                    elif current_piece['name'] in ["卒", "兵"] and surrounding_piece['name'] in ["帥", "將"]:
                                         print("電腦: 卒(兵) 吃 帥(將)")
-                                        can_capture = True
-                                    elif current_piece['name'] in ["帥", "將"] and surrounding_piece['name'] not in ["卒", "兵"]:
-                                        print("電腦: 帥(將) 吃 卒(兵)以外的棋子")
-                                        can_capture = True
-                                    elif self.piece_ranks[current_piece['name']] >= self.piece_ranks[surrounding_piece['name']]:
-                                        print("電腦: 我方棋子吃掉敵方棋子")
                                         can_capture = True
                                     if can_capture:
                                         if self.move_piece(piece_id, surrounding_piece['position']): # 無法再繼續吃子，輪到玩家
@@ -592,7 +592,6 @@ class ChessGame:
                                             break # piece_id 的位置更新後跳出 for 迴圈繼續執行 while 迴圈 
                                     else:
                                         print(f"{current_piece['name']} 沒辦法吃掉 {surrounding_piece['name']}。")
-                                        print(f"因為 {self.piece_ranks[current_piece['name']]} 小於 {self.piece_ranks[surrounding_piece['name']]}。")
                                 else: # 再吃未揭示的棋子
                                     print("目標候選為未揭示的棋子")
                                     if self.move_piece(piece_id, surrounding_piece['position']):
@@ -608,12 +607,19 @@ class ChessGame:
                         else:
                             print(f"{current_piece['name']} 附近沒有可以吃的棋子。")
                             change_current_piece = -1 # 該棋子附近完全沒有其他棋子時，換下一個 revealed_pieces    
+            print("測試用。")
 
-        # 2-2. 到這裡表示沒有任何旗子能吃
-        if revealed_pieces:
-            directions = [(-100, 0), (100, 0), (0, -100), (0, 100)]
-            revealed_pieces_sorted = self.sort_pieces(revealed_pieces) # 從等級最大的開始嘗試移動
-            for piece_id in revealed_pieces_sorted:
+        # 3. 無法吃子則隨機選擇一顆移動或翻旗
+        facedown_pieces_id = [piece_id for piece_id, info in self.pieces.items() if not info["reveal"]]
+        move_candidate = revealed_pieces + facedown_pieces_id
+        random.shuffle(move_candidate)
+        if not move_candidate:
+            print(f"沒有可以翻也沒有可以移的棋，輪到玩家回合。")
+            self.end_turn()
+            return
+        directions = [(-100, 0), (100, 0), (0, -100), (0, 100)]
+        for piece_id in move_candidate:
+            if self.pieces[piece_id]['reveal']: # 
                 random.shuffle(directions)
                 current_position = self.pieces[piece_id]['position']
                 for dx, dy in directions:
@@ -625,16 +631,12 @@ class ChessGame:
                                 print(f"將 {self.pieces[piece_id]['name']} 移動到 ({tx}, {ty})")
                                 self.end_turn()
                                 return
-
-        # 3. 如果棋盤上沒有已翻開的我方棋子，翻開一顆未翻開的棋子
-        print("棋盤上沒有電腦棋子可以移動，翻開一顆未翻開的棋子")
-        facedown_pieces_id = [piece_id for piece_id, info in self.pieces.items() if not info["reveal"]]
-        if facedown_pieces_id:
-            to_reveal_id = random.choice(facedown_pieces_id)
-            self.reveal_piece(to_reveal_id)
-            print(f"在 {self.pieces[to_reveal_id]['position']} 翻開了一顆棋子: {self.pieces[to_reveal_id]['name']}")
-            self.end_turn()
-            return
+            else:
+                to_reveal_id = random.choice(facedown_pieces_id)
+                self.reveal_piece(to_reveal_id)
+                print(f"在 {self.pieces[to_reveal_id]['position']} 翻開了一顆棋子: {self.pieces[to_reveal_id]['name']}")
+                self.end_turn()
+                return
 
 # Main loop
 if __name__ == "__main__":
