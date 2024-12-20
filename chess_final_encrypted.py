@@ -246,21 +246,27 @@ class ChessGame:
         return piece
 
     def check_game_over(self):
-        # 要將玩家得到的經驗值更新到玩家資訊中。
+        # 要將玩家得到的經驗值更新到玩家資訊中~~~
         if self.no_capture >= 50:
             player_score = 0
             self.game_over = True
             messagebox.showinfo("遊戲結束", f"雙方進行翻棋或移動棋子連續達 50 次: 和局，玩家得分為 {player_score} 。")
+            if self.saved_last_game:
+                os.remove(self.saved_last_game)
             return
         elif len(self.death_pieces_computer) == 16:
             self.game_over = True
             player_score = 500 + 100*(16 - len(self.death_pieces_player))
             messagebox.showinfo("遊戲結束", f"玩家獲勝！玩家得分為 {player_score} 。")
+            if self.saved_last_game:
+                os.remove(self.saved_last_game)
             return
         elif len(self.death_pieces_player) == 16:
             player_score = 0
             self.game_over = True
             messagebox.showinfo("遊戲結束", f"電腦獲勝！玩家得分為 {player_score} 。")
+            if self.saved_last_game:
+                os.remove(self.saved_last_game)
             return
        
     def handle_click_event(self, event):
@@ -510,6 +516,7 @@ class ChessGame:
     
     def cannon_validate_move(self, cannon_piece, target_piece):
         """ 驗證在同一橫排或縱列上，炮和目標位置中間必須恰好有一個棋子。 """
+        # print("目前旗子狀態: ", self.pieces)
         cx, cy = cannon_piece["position"]
         tx, ty = target_piece["position"]
         if cx == tx: # 位於同一橫排
@@ -517,18 +524,19 @@ class ChessGame:
             count = 0
             for y in range(min_y + 1, max_y): # 計算兩個棋子之間有多少棋子
                 if any(piece["position"] == (cx, y) for piece in self.pieces.values()):
+                    # print(f"{(cx, y)} 有棋子 {self.get_piece_at_position((cx, y))}")
                     count += 1
-            print("同一橫排: ", count)
+            # print("同一橫排: ", count)
             return count == 1 # 恰有一顆時回傳 True
         elif cy == ty:  # 位於同一縱列
             min_x, max_x = sorted([cx, tx]) # 計算兩個棋子之間有多少棋子
             count = 0
             for x in range(min_x + 1, max_x):
                 if any(piece["position"] == (x, cy) for piece in self.pieces.values()):
+                    # print(f"{(x, cy)} 有棋子 {self.get_piece_at_position((x, cy))}")
                     count += 1
-            print("同一橫排: ", count)
+            # print("同一縱列: ", count)
             return count == 1
-        print("應該是不同排也不同列。")
         return False
     
     def cannon_continue_capture(self, cannon_id):
@@ -737,7 +745,6 @@ def main(user_account, saved_last_game):
         # saved_last_game = "./result/1219_usertest"
         if saved_last_game:
             response = messagebox.askyesno("遊戲紀錄", "檢測到上一次的遊戲紀錄，是否要繼續遊戲？")
-            root.withdraw()
             if response:
                 game = ChessGame(root, piece_ranks, user_account, saved_last_game)
                 # game.continue_game()
@@ -749,7 +756,7 @@ def main(user_account, saved_last_game):
             messagebox.showinfo("提示", "未檢測到遊戲紀錄，將開始新遊戲。")
             game = ChessGame(root, piece_ranks, user_account, saved_last_game=None)
         # root.destroy()
-        # root.withdraw()
+        root.withdraw()
             
     # 建立主視窗
     root = tk.Tk()
