@@ -122,8 +122,8 @@ class ChessGame:
         encrypted_data = fernet.encrypt(game_state_json.encode())
 
         # 將加密的資料儲存為檔案
-         # with open(f'./chess_game_records/{self.user_account}_encrypted', "wb") as f:
-        with open(f'./chess_game_records/{today}_usertest.encrypted', "wb") as f:
+        with open(f'./chess_game_records/{self.user_account}.encrypted', "wb") as f:
+        # with open(f'./chess_game_records/{today}_usertest.encrypted', "wb") as f:
             f.write(encrypted_data)
 
     def draw_chessboard(self):
@@ -770,7 +770,15 @@ def main(user_account, saved_last_game):
     root.mainloop()
 
 if __name__ == "__main__":
-    user_account = 123  # 要改成當時登入的使用者~~~
-    saved_last_game = "./chess_game_records/1220_usertest.encrypted" # 找目前這個使用者是否有上一次的象棋遊戲紀錄，沒有的話就 = None ~~~
-    # saved_last_game = None
+    user_account = current_user # 當時登入的使用者~~~
+    folder_path = "./chess_game_records"
+    file_name = f"{str(user_account)}.encrypted"
+
+    if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄，沒有的話就 = None ~~~
+        saved_last_game = folder_path + file_name
+        print(f"檔案 {file_name} 存在於資料夾 {folder_path} 中。")
+    else:
+        saved_last_game = None
+        print(f"檔案 {file_name} 不存在於資料夾 {folder_path} 中。")
+
     main(user_account, saved_last_game)
