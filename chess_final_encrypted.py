@@ -775,7 +775,7 @@ if __name__ == "__main__":
     file_name = f"{str(user_account)}.encrypted"
 
     if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄，沒有的話就 = None ~~~
-        saved_last_game = folder_path + file_name
+        saved_last_game = folder_path + "/" + file_name
         print(f"檔案 {file_name} 存在於資料夾 {folder_path} 中。")
     else:
         saved_last_game = None
