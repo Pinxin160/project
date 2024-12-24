@@ -63,12 +63,12 @@ def login_screen():
 
     # 帳號輸入框
     tk.Label(input_frame, text=" 帳號 ", font=("Arial", 12, "bold"), bg="#f0f0f0").grid(row=0, column=0, pady=5)
-    username_entry = tk.Entry(input_frame, font=("Arial", 12), bd=0, relief="solid", width=18)
+    username_entry = tk.Entry(input_frame, font=("Arial", 12), bd=1, relief="solid", width=18)
     username_entry.grid(row=0, column=1, pady=5, sticky="ew")
 
     # 密碼輸入框
     tk.Label(input_frame, text=" 密碼 ", font=("Arial", 12, "bold"), bg="#f0f0f0").grid(row=1, column=0, pady=5)
-    password_entry = tk.Entry(input_frame, show="*", font=("Arial", 12), bd=0, relief="solid", width=18)
+    password_entry = tk.Entry(input_frame, show="*", font=("Arial", 12), bd=1, relief="solid", width=18)
     password_entry.grid(row=1, column=1, pady=5, sticky="ew")
 
     # 密碼顯示/隱藏按鈕
@@ -77,12 +77,12 @@ def login_screen():
     toggle_button.grid(row=1, column=2, padx=5, pady=5)
 
     # 登入按鈕
-    login_button = tk.Button(input_frame, text="登入", command=handle_login, font=("Arial", 12, "bold"), bg="#4CAF50", fg="white", height=1, relief="flat", width=6)
-    login_button.grid(row=2, column=1, padx=5, pady=3, sticky="w")
+    login_button = tk.Button(input_frame, text="登入", command=handle_login, font=("Arial", 12, "bold"), bg="#4CAF50", fg="white", height=1, relief="raised", width=6)
+    login_button.grid(row=2, column=1, padx=5, pady=5, sticky="w")
 
     # 註冊按鈕
-    register_button = tk.Button(input_frame, text="註冊", command=switch_to_register, font=("Arial", 12, "bold"), bg="#008CBA", fg="white", height=1, relief="flat", width=6)
-    register_button.grid(row=2, column=1, padx=5, pady=3, sticky="e")
+    register_button = tk.Button(input_frame, text="註冊", command=switch_to_register, font=("Arial", 12, "bold"), bg="#008CBA", fg="white", height=1, relief="raised", width=6)
+    register_button.grid(row=2, column=1, padx=5, pady=5, sticky="e")
 
     # 忘記密碼按鈕
     forgot_password_button = tk.Button(input_frame, text="忘記密碼?", command=switch_to_forgot_password, font=("Arial", 9, "bold"), bg="#ff6347", fg="white", relief="flat")
@@ -96,31 +96,25 @@ def forgot_password_screen():
         username = username_entry.get()
         answer = answer_entry.get()
         users = load_users()
-        
+
         # 驗證安全問題
         for user in users["users"]:
             if user["username"] == username:
                 if user["security_answer"] == answer:
                     messagebox.showinfo("成功", f"您的密碼為：{user['password']}")
                     forgot_window.destroy()
-                    login_screen()  # 跳回登入頁面
+                    login_screen()
                     return
                 else:
                     messagebox.showerror("錯誤", "答案錯誤！")
                     return
-        
+
         messagebox.showerror("錯誤", "找不到該帳號！")
 
-    forgot_window = tk.Tk()
-    forgot_window.title("忘記密碼")
-    forgot_window.geometry("400x400")
+    def switch_to_login():
+        forgot_window.destroy()
+        login_screen()
 
-    # 輸入帳號
-    tk.Label(forgot_window, text="請輸入您的帳號", font=("Arial", 12)).pack(pady=10)
-    username_entry = tk.Entry(forgot_window, font=("Arial", 12))
-    username_entry.pack(pady=5)
-
-    # 顯示安全問題（需動態更新）
     def show_security_question():
         username = username_entry.get()
         users = load_users()
@@ -130,27 +124,85 @@ def forgot_password_screen():
                 return
         question_label.config(text="找不到該帳號！")
 
-    check_button = tk.Button(forgot_window, text="確認帳號", command=show_security_question, font=("Arial", 12), bg="#4CAF50", fg="white", width=20)
+    forgot_window = tk.Tk()
+    forgot_window.title("忘記密碼")
+    forgot_window.geometry("400x500")
+    forgot_window.config(bg="#f0f8ff")  # 背景顏色
+
+    # 標題
+    tk.Label(forgot_window, text="忘記密碼", font=("Arial", 20, "bold"), bg="#f0f8ff", fg="#333").pack(pady=20)
+
+    # 輸入帳號
+    tk.Label(forgot_window, text="請輸入您的帳號", font=("Arial", 14), bg="#f0f8ff", fg="#333").pack(pady=5)
+    username_entry = tk.Entry(forgot_window, font=("Arial", 14), width=30, bd=2, relief="solid")
+    username_entry.pack(pady=5)
+
+    # 確認帳號按鈕
+    check_button = tk.Button(
+        forgot_window,
+        text="確認帳號",
+        command=show_security_question,
+        font=("Arial", 12),
+        bg="#4CAF50",
+        fg="white",
+        relief="raised",
+        bd=3,
+        width=20
+    )
     check_button.pack(pady=10)
 
-    # 顯示安全問題標籤
-    question_label = tk.Label(forgot_window, text="安全問題：", font=("Arial", 12), wraplength=300, width=20)
+    # 顯示安全問題
+    question_label = tk.Label(
+        forgot_window,
+        text="安全問題：",
+        font=("Arial", 12, "italic"),
+        bg="#e6f7ff",
+        fg="#00509e",
+        wraplength=300,
+        width=30,
+        relief="groove",
+        bd=2,
+        height=3
+    )
     question_label.pack(pady=10)
 
     # 輸入答案
-    tk.Label(forgot_window, text="請輸入您的答案", font=("Arial", 12)).pack(pady=10)
-    answer_entry = tk.Entry(forgot_window, font=("Arial", 12))
+    tk.Label(forgot_window, text="請輸入您的答案", font=("Arial", 14), bg="#f0f8ff", fg="#333").pack(pady=5)
+    answer_entry = tk.Entry(forgot_window, font=("Arial", 14), width=30, bd=2, relief="solid")
     answer_entry.pack(pady=5)
 
     # 確認答案按鈕
-    validate_button = tk.Button(forgot_window, text="驗證答案", command=validate_security_answer, font=("Arial", 12), bg="#4CAF50", fg="white", width=20)
-    validate_button.pack(pady=20)
+    validate_button = tk.Button(
+        forgot_window,
+        text="驗證答案",
+        command=validate_security_answer,
+        font=("Arial", 12),
+        bg="#4CAF50",
+        fg="white",
+        relief="raised",
+        bd=3,
+        width=20
+    )
+    validate_button.pack(pady=10)
+
+    # 返回登入按鈕
+    back_button = tk.Button(
+        forgot_window,
+        text="返回登入",
+        command=switch_to_login,
+        font=("Arial", 12),
+        bg="#ff6347",
+        fg="white",
+        relief="raised",
+        bd=3,
+        width=20
+    )
+    back_button.pack(pady=10)
 
     forgot_window.mainloop()
 
 
 def register_screen():
-
     def handle_register():
         username = username_entry.get()
         password = password_entry.get()
@@ -170,7 +222,6 @@ def register_screen():
             messagebox.showinfo("成功", "註冊成功！請重新登入。")
             main_window.destroy()
             login_screen()
-
         else:
             messagebox.showerror("失敗", "帳號已存在，請使用其他名稱！")
 
@@ -178,40 +229,113 @@ def register_screen():
         main_window.destroy()
         login_screen()
 
+    def toggle_password_visibility(entry, button):
+        if entry.cget('show') == '*':
+            entry.config(show='')
+            button.config(text='隱藏')
+        else:
+            entry.config(show='*')
+            button.config(text='顯示')
+
+    # 主視窗設置
     main_window = tk.Tk()
     main_window.title("註冊")
     main_window.geometry("400x350")
+    main_window.configure(bg="#f0f8ff")
 
-    tk.Label(main_window, text="帳號", font=("Arial", 14)).grid(row=0, column=0, padx=10, pady=5)
-    username_entry = tk.Entry(main_window, font=("Arial", 12))
-    username_entry.grid(row=0, column=1, padx=10, pady=5)
-    tk.Label(main_window, text="密碼", font=("Arial", 14)).grid(row=1, column=0, padx=10, pady=5)
-    password_entry = tk.Entry(main_window, show="*", font=("Arial", 12))
-    password_entry.grid(row=1, column=1, padx=10, pady=5)
+    # 標題
+    tk.Label(
+        main_window,
+        text="註冊新帳號",
+        font=("Arial", 20, "bold"),
+        fg="#333",
+        bg="#f0f8ff"
+    ).grid(row=0, column=1, columnspan=1, pady=15)
 
-    tk.Label(main_window, text="確認密碼", font=("Arial", 14)).grid(row=2, column=0, padx=10, pady=5)
-    confirm_password_entry = tk.Entry(main_window, show="*", font=("Arial", 12))
-    confirm_password_entry.grid(row=2, column=1, padx=10, pady=5)
+    # 帳號欄位
+    tk.Label(main_window, text="帳號", font=("Arial", 14), bg="#f0f8ff").grid(row=1, column=0, padx=10, pady=5, sticky="e")
+    username_entry = tk.Entry(main_window, font=("Arial", 12), width=20, bd=2, relief="solid")
+    username_entry.grid(row=1, column=1, padx=10, pady=5)
 
-    tk.Label(main_window, text="安全問題", font=("Arial", 14)).grid(row=3, column=0, padx=10, pady=5)
-    question_entry = tk.Entry(main_window, font=("Arial", 12))
-    question_entry.grid(row=3, column=1, padx=10, pady=5)
+    # 密碼欄位
+    tk.Label(main_window, text="密碼", font=("Arial", 14), bg="#f0f8ff").grid(row=2, column=0, padx=10, pady=5, sticky="e")
+    password_entry = tk.Entry(main_window, show="*", font=("Arial", 12), width=20, bd=2, relief="solid")
+    password_entry.grid(row=2, column=1, padx=10, pady=5)
 
-    tk.Label(main_window, text="答案", font=("Arial", 14)).grid(row=4, column=0, padx=10, pady=5)
-    answer_entry = tk.Entry(main_window, font=("Arial", 12))
-    answer_entry.grid(row=4, column=1, padx=10, pady=5)
+   # 密碼顯示/隱藏按鈕
+    toggle_button = tk.Button(
+        main_window,
+        text="顯示",
+        command=lambda: toggle_password_visibility(password_entry, toggle_button),
+        font=("Arial", 9, "bold"),
+        bg="#ffcc00",
+        fg="white",
+        relief="ridge",
+        width=5,
+        height=0
+    )
+    toggle_button.grid(row=2, column=2, padx=5, pady=5)
 
-    # 切換確認密碼顯示按鈕
-    confirm_toggle_button = tk.Button(main_window, text="顯示", command=lambda: toggle_password_visibility(confirm_password_entry, confirm_toggle_button))
-    confirm_toggle_button.grid(row=2, column=2, padx=5, pady=5)
+    # 確認密碼欄位
+    tk.Label(main_window, text=" 確認密碼", font=("Arial", 14), bg="#f0f8ff").grid(row=3, column=0, padx=10, pady=5, sticky="e")
+    confirm_password_entry = tk.Entry(main_window, show="*", font=("Arial", 12), width=20, bd=2, relief="solid")
+    confirm_password_entry.grid(row=3, column=1, padx=10, pady=5)
 
-    # 切換密碼顯示按鈕
-    toggle_button = tk.Button(main_window, text="顯示", command=lambda: toggle_password_visibility(password_entry, toggle_button))
-    toggle_button.grid(row=1, column=2, padx=5, pady=5)
-    
-    tk.Button(main_window, text="註冊", command=handle_register, font=("Arial", 12)).grid(row=5, column=0, columnspan=2, pady=10)
-    tk.Button(main_window, text="返回登入", command=switch_to_login, font=("Arial", 12)).grid(row=6, column=0, columnspan=2, pady=10)
-    
+    # 確認密碼顯示/隱藏按鈕
+    confirm_toggle_button = tk.Button(
+        main_window,
+        text="顯示",
+        command=lambda: toggle_password_visibility(confirm_password_entry, confirm_toggle_button),
+        font=("Arial", 9, "bold"),
+        bg="#ffcc00",
+        fg="white",
+        relief="ridge",
+        width=5,
+        height=0
+    )
+    confirm_toggle_button.grid(row=3, column=2, padx=5, pady=5)
+
+    # 安全問題欄位
+    tk.Label(main_window, text=" 安全問題", font=("Arial", 14), bg="#f0f8ff").grid(row=4, column=0, padx=10, pady=5, sticky="e")
+    question_entry = tk.Entry(main_window, font=("Arial", 12), width=20, bd=2, relief="solid")
+    question_entry.grid(row=4, column=1, padx=10, pady=5)
+
+    # 答案欄位
+    tk.Label(main_window, text="答案", font=("Arial", 14), bg="#f0f8ff").grid(row=5, column=0, padx=10, pady=5, sticky="e")
+    answer_entry = tk.Entry(main_window, font=("Arial", 12), width=20, bd=2, relief="solid")
+    answer_entry.grid(row=5, column=1, padx=10, pady=5)
+
+    # 調整按鈕的行
+    # 註冊按鈕和返回登入按鈕的容器
+    button_frame = tk.Frame(main_window, bg="#f0f8ff")  # 使用 Frame 容器
+    button_frame.grid(row=6, column=1, columnspan=1, pady=25)
+
+    # 註冊按鈕
+    tk.Button(
+        button_frame,
+        text="註冊",
+        command=handle_register,
+        font=("Arial", 10, "bold"),
+        bg="#4CAF50",
+        fg="white",
+        relief="raised",
+        width=9,
+        height=1
+    ).grid(row=0, column=0, padx=(20, 10), sticky="w")  # 左對齊
+
+    # 返回登入按鈕
+    tk.Button(
+        button_frame,
+        text="返回登入",
+        command=switch_to_login,
+        font=("Arial", 10, "bold"),
+        bg="#ff6347",
+        fg="white",
+        relief="raised",
+        width=9,
+        height=1
+    ).grid(row=0, column=1, padx=(10, 20), sticky="e")  # 右對齊
+
     main_window.mainloop()
 
 
@@ -225,7 +349,7 @@ def game_screen(current_user):
         main_window.destroy()
         login_screen()  # 登出後返回登入界面
 
-    # 修改密碼
+       # 修改密碼
     def change_password():
 
         def handle_change_password():
@@ -255,57 +379,66 @@ def game_screen(current_user):
         # 彈出修改密碼視窗
         change_password_window = tk.Toplevel(main_window)
         change_password_window.title("修改密碼")
-        change_password_window.geometry("400x200")
+        change_password_window.geometry("400x250")
+        change_password_window.configure(bg="#f0f8ff")  # 淡藍色背景
 
-        tk.Label(change_password_window, text="舊密碼", font=("Arial", 12)).grid(row=0, column=0, padx=10, pady=5)
+        # 標籤與輸入框
+        tk.Label(change_password_window, text="舊密碼", font=("Arial", 12), bg="#f0f8ff").grid(row=1, column=0, padx=10, pady=10, sticky="e")
         old_password_entry = tk.Entry(change_password_window, show="*", font=("Arial", 12))
-        old_password_entry.grid(row=0, column=1, padx=10, pady=5)
+        old_password_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        tk.Label(change_password_window, text="新密碼", font=("Arial", 12)).grid(row=1, column=0, padx=10, pady=5)
+        tk.Label(change_password_window, text="新密碼", font=("Arial", 12), bg="#f0f8ff").grid(row=2, column=0, padx=10, pady=10, sticky="e")
         new_password_entry = tk.Entry(change_password_window, show="*", font=("Arial", 12))
-        new_password_entry.grid(row=1, column=1, padx=10, pady=5)
+        new_password_entry.grid(row=2, column=1, padx=10, pady=10)
 
-        tk.Label(change_password_window, text="確認密碼", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=5)
+        tk.Label(change_password_window, text="確認密碼", font=("Arial", 12), bg="#f0f8ff").grid(row=3, column=0, padx=10, pady=10, sticky="e")
         confirm_password_entry = tk.Entry(change_password_window, show="*", font=("Arial", 12))
-        confirm_password_entry.grid(row=2, column=1, padx=10, pady=5)
+        confirm_password_entry.grid(row=3, column=1, padx=10, pady=10)
 
+        # 顯示密碼功能
         toggle_button1 = tk.Button(change_password_window, text="顯示", command=lambda: toggle_password_visibility(old_password_entry, toggle_button1))
-        toggle_button1.grid(row=0, column=2, padx=5, pady=5)
+        toggle_button1.grid(row=1, column=2, padx=5, pady=5)
 
         toggle_button2 = tk.Button(change_password_window, text="顯示", command=lambda: toggle_password_visibility(new_password_entry, toggle_button2))
-        toggle_button2.grid(row=1, column=2, padx=5, pady=5)
+        toggle_button2.grid(row=2, column=2, padx=5, pady=5)
 
         toggle_button3 = tk.Button(change_password_window, text="顯示", command=lambda: toggle_password_visibility(confirm_password_entry, toggle_button3))
-        toggle_button3.grid(row=2, column=2, padx=5, pady=5)
+        toggle_button3.grid(row=3, column=2, padx=5, pady=5)
 
-        tk.Button(change_password_window, text="確認修改", command=handle_change_password, font=("Arial", 12)).grid(row=3, column=0, columnspan=2, pady=10)
-    
+        # 確認修改密碼按鈕
+        tk.Button(change_password_window, text="確認修改", command=handle_change_password, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=4, column=0, columnspan=3, pady=20)
 
     main_window = tk.Tk()
     main_window.title("遊戲選擇")
-    main_window.geometry("400x400")
-    main_window.configure(bg="#f5f5f5")
+    main_window.geometry("500x500")
+
+    # 加載背景圖片
+    bg_image = Image.open("background2.jpg")  # 確保圖片路徑正確
+    bg_image = bg_image.resize((500, 500))  # 調整背景大小適應視窗
+    bg_photo = ImageTk.PhotoImage(bg_image)
+
+    bg_label = tk.Label(main_window, image=bg_photo)
+    bg_label.place(relwidth=1, relheight=1)  # 設定背景圖片填滿整個視窗
 
     # 顯示玩家資訊
     player_info_label = f"玩家名稱: {current_user['username']}\n等級: {current_user['level']}\n分數: {current_user['score']}"
-    tk.Label(main_window, text=player_info_label, font=("Arial", 14), bg="#f5f5f5").grid(row=0, column=0, columnspan=2, pady=20)
+    tk.Label(main_window, text=player_info_label, font=("Arial", 14), bg="#f5f5f5", anchor="w").grid(row=0, column=0, columnspan=2, padx=20, pady=20)
 
     # 顯示遊戲選擇界面標題
-    tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18)).grid(row=0, column=10, columnspan=2, pady=20)
+    tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18, "bold"), bg="#f5f5f5").grid(row=1, column=0, columnspan=2, pady=20)
 
     # 修改密碼按鈕
-    tk.Button(main_window, text="修改密碼", command=change_password, font=("Arial", 12)).grid(row=1, column=8, columnspan=2, pady=10)
+    tk.Button(main_window, text="修改密碼", command=change_password, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=2, column=0, columnspan=2, pady=10)
 
     # 遊戲選項按鈕
-    tk.Button(main_window, text="貪食蛇", command=lambda: start_game("貪食蛇"), font=("Arial", 12)).grid(row=1, column=0, columnspan=2, pady=10)
-    tk.Button(main_window, text="象棋", command=lambda: start_game("象棋"), font=("Arial", 12)).grid(row=2, column=0, columnspan=2, pady=10)
-    tk.Button(main_window, text="吹牛", command=lambda: start_game("吹牛"), font=("Arial", 12)).grid(row=3, column=0, columnspan=2, pady=10)
-    
+    tk.Button(main_window, text="貪食蛇", command=lambda: start_game("貪食蛇"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=3, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="象棋", command=lambda: start_game("象棋"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=4, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="吹牛", command=lambda: start_game("吹牛"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=5, column=0, columnspan=2, pady=10)
+
     # 登出按鈕
-    tk.Button(main_window, text="登出", command=logout, font=("Arial", 12)).grid(row=4, column=0, columnspan=2, pady=10)
+    tk.Button(main_window, text="登出", command=logout, font=("Arial", 12), bg="#ff6347", fg="white").grid(row=6, column=0, columnspan=2, pady=20)
 
     main_window.mainloop()
-
 
 initialize_data()
 login_screen()
