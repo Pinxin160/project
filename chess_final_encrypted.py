@@ -152,6 +152,7 @@ class ChessGame:
                 self.pieces[piece_id]["canvas_id"] = self.create_facedown_piece(x, y)
 
     def load_game_state(self, file_name):
+        print("檔案名稱: ", file_name)
         if not os.path.exists(file_name):
             messagebox.showinfo("遊戲繼續", "未找到存檔，開始新遊戲。")
             self.initialize_game_state()
@@ -246,29 +247,27 @@ class ChessGame:
         return piece
 
     def check_game_over(self):
-        # 要將玩家得到的經驗值更新到玩家資訊中~~~
+        """檢查遊戲是否結束並處理結果"""
         if self.no_capture >= 50:
+            result = "和局"
             player_score = 0
-            self.game_over = True
-            messagebox.showinfo("遊戲結束", f"雙方進行翻棋或移動棋子連續達 50 次: 和局，玩家得分為 {player_score} 。")
-            if self.saved_last_game:
-                os.remove(self.saved_last_game)
-            return
+            message = f"雙方進行翻棋或移動棋子連續達 50 次: {result}，玩家得分為 {player_score} 。"
         elif len(self.death_pieces_computer) == 16:
-            self.game_over = True
-            player_score = 500 + 100*(16 - len(self.death_pieces_player))
-            messagebox.showinfo("遊戲結束", f"玩家獲勝！玩家得分為 {player_score} 。")
-            if self.saved_last_game:
-                os.remove(self.saved_last_game)
-            return
+            result = "玩家獲勝"
+            player_score = 500 + 100 * (16 - len(self.death_pieces_player))
+            message = f"{result}！玩家得分為 {player_score} 。"
         elif len(self.death_pieces_player) == 16:
+            result = "電腦獲勝"
             player_score = 0
-            self.game_over = True
-            messagebox.showinfo("遊戲結束", f"電腦獲勝！玩家得分為 {player_score} 。")
-            if self.saved_last_game:
-                os.remove(self.saved_last_game)
-            return
-       
+            message = f"{result}！玩家得分為 {player_score} 。"
+        else:
+            return  # 若未達結束條件，直接返回
+
+        self.game_over = True
+        messagebox.showinfo("遊戲結束", message)
+        if self.saved_last_game:
+            os.remove(self.saved_last_game)
+
     def handle_click_event(self, event):
         if self.game_over:  # 如果遊戲已結束，阻止操作
             return
@@ -511,31 +510,32 @@ class ChessGame:
                 print("等級不夠高無法吃子...")
                 return False  # 無法吃子
 
-        print("不知道發生什麼情況的無法吃子。")
+        # print("不知道發生什麼情況的無法吃子。")
         return False  # 無法吃子(應該不會有這個情況)
     
     def cannon_validate_move(self, cannon_piece, target_piece):
         """ 驗證在同一橫排或縱列上，炮和目標位置中間必須恰好有一個棋子。 """
-        # print("目前旗子狀態: ", self.pieces)
         cx, cy = cannon_piece["position"]
         tx, ty = target_piece["position"]
-        if cx == tx: # 位於同一橫排
+        position = [piece["position"] for piece in self.pieces.values()]
+        print(position)
+        if cx == tx: # 位於同一縱列
             min_y, max_y = sorted([cy, ty])
             count = 0
-            for y in range(min_y + 1, max_y): # 計算兩個棋子之間有多少棋子
-                if any(piece["position"] == (cx, y) for piece in self.pieces.values()):
+            for y in range(min_y + 100, max_y - 10, 100): # 計算兩個棋子之間有多少棋子
+                if any(tuple(piece["position"]) == (cx, y) for piece in self.pieces.values()):
                     # print(f"{(cx, y)} 有棋子 {self.get_piece_at_position((cx, y))}")
                     count += 1
-            # print("同一橫排: ", count)
+            print("同一縱列: ", count)
             return count == 1 # 恰有一顆時回傳 True
-        elif cy == ty:  # 位於同一縱列
+        elif cy == ty:  # 位於同一橫排
             min_x, max_x = sorted([cx, tx]) # 計算兩個棋子之間有多少棋子
             count = 0
-            for x in range(min_x + 1, max_x):
-                if any(piece["position"] == (x, cy) for piece in self.pieces.values()):
+            for x in range(min_x + 100, max_x - 10, 100):
+                if any(tuple(piece["position"]) == (x, cy) for piece in self.pieces.values()):
                     # print(f"{(x, cy)} 有棋子 {self.get_piece_at_position((x, cy))}")
                     count += 1
-            # print("同一縱列: ", count)
+            print("同一橫排: ", count)
             return count == 1
         return False
     
@@ -551,6 +551,7 @@ class ChessGame:
                     if target_piece_id:
                         target_piece = self.pieces[target_piece_id]
                         if self.cannon_validate_move(cannon_piece, target_piece): # 存在有可以吃的子
+                            print("炮有可以吃的子。")
                             if not target_piece['reveal'] or (target_piece['color'] != cannon_piece['color']):
                                 return target_piece_id
                     else:
@@ -649,6 +650,7 @@ class ChessGame:
                         if self.cannon_continue_capture(piece_id):
                             target_piece_id = self.cannon_continue_capture(piece_id)
                             target_piece = self.pieces[target_piece_id]
+                            print("target_piece: ", target_piece)
                             if self.move_piece(piece_id, target_piece['position']): # 無法再繼續吃子，輪到玩家
                                 print("電腦無法再吃子，輪到玩家。")
                                 self.switch_turn()
@@ -770,7 +772,7 @@ def main(user_account, saved_last_game):
     root.mainloop()
 
 if __name__ == "__main__":
-    user_account = current_user # 當時登入的使用者~~~
+    user_account = 123 # 當時登入的使用者~~~
     folder_path = "./chess_game_records"
     file_name = f"{str(user_account)}.encrypted"
 
