@@ -7,12 +7,14 @@ import os
 from cryptography.fernet import Fernet
 
 class ChessGame:
-    def __init__(self, root, piece_ranks, user_account, saved_last_game=None):
+    def __init__(self, root, piece_ranks, user_file, saved_last_game=None):
         self.root = root
         self.game_window = tk.Toplevel(self.root)  # 創建第二個視窗（遊戲視窗）
         self.game_window.title("Chinese Dark Chess Game")
         self.piece_ranks = piece_ranks
-        self.user_account = user_account
+        self.user_file = user_file
+        self.user_account = user_file['username']
+        self.user_ori_score = user_file['score']
         self.saved_last_game = saved_last_game
         self.key_filename = './chess_game_records/key.key'
 
@@ -264,6 +266,7 @@ class ChessGame:
             return  # 若未達結束條件，直接返回
 
         self.game_over = True
+        self.user_file['score'] = self.user_ori_score + player_score
         messagebox.showinfo("遊戲結束", message)
         if self.saved_last_game:
             os.remove(self.saved_last_game)
@@ -731,7 +734,7 @@ class ChessGame:
                 self.switch_turn()
                 return
 
-def main(user_account, saved_last_game):
+def main(user_file, saved_last_game):
     piece_ranks = {
         "將": 10, "帥": 10,
         "士": 9, "仕": 9,
@@ -748,15 +751,15 @@ def main(user_account, saved_last_game):
         if saved_last_game:
             response = messagebox.askyesno("遊戲紀錄", "檢測到上一次的遊戲紀錄，是否要繼續遊戲？")
             if response:
-                game = ChessGame(root, piece_ranks, user_account, saved_last_game)
+                game = ChessGame(root, piece_ranks, user_file, saved_last_game)
                 # game.continue_game()
             else:
-                game = ChessGame(root, piece_ranks, user_account, saved_last_game=None)
+                game = ChessGame(root, piece_ranks, user_file, saved_last_game=None)
                 # game.start_new_game()
         else:
             # 如果沒有遊戲紀錄，直接開始新遊戲
             messagebox.showinfo("提示", "未檢測到遊戲紀錄，將開始新遊戲。")
-            game = ChessGame(root, piece_ranks, user_account, saved_last_game=None)
+            game = ChessGame(root, piece_ranks, user_file, saved_last_game=None)
         # root.destroy()
         root.withdraw()
             
@@ -771,16 +774,16 @@ def main(user_account, saved_last_game):
     
     root.mainloop()
 
-if __name__ == "__main__":
-    user_account = 123 # 當時登入的使用者~~~
-    folder_path = "./chess_game_records"
-    file_name = f"{str(user_account)}.encrypted"
+# if __name__ == "__main__":
+#     user_account = 123 # 當時登入的使用者~~~
+#     folder_path = "./chess_game_records"
+#     file_name = f"{str(user_account)}.encrypted"
 
-    if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄，沒有的話就 = None ~~~
-        saved_last_game = folder_path + "/" + file_name
-        print(f"檔案 {file_name} 存在於資料夾 {folder_path} 中。")
-    else:
-        saved_last_game = None
-        print(f"檔案 {file_name} 不存在於資料夾 {folder_path} 中。")
+#     if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄，沒有的話就 = None ~~~
+#         saved_last_game = folder_path + "/" + file_name
+#         print(f"檔案 {file_name} 存在於資料夾 {folder_path} 中。")
+#     else:
+#         saved_last_game = None
+#         print(f"檔案 {file_name} 不存在於資料夾 {folder_path} 中。")
 
-    main(user_account, saved_last_game)
+#     main(user_account, saved_last_game)
