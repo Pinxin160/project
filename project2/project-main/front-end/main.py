@@ -353,57 +353,65 @@ def stop_music():
     pygame.mixer.music.stop()
 
 
-import chess_game_encrypted, DiceGame_V1, os #, 貪食蛇_加入排行榜
+import chess_game_encrypted_2p, DiceGame_V1, os #, 貪食蛇_加入排行榜
 import os #, 貪食蛇_加入排行榜
 
 def game_screen(current_user):
 
     def start_game(game_name):
 
-        # 發送開始遊戲通知
-        add_notification(f"遊戲開始：{game_name}，祝您玩得愉快！")
-
-        messagebox.showinfo("開始遊戲", f"{game_name} 開始！")
+        add_notification(f"來玩一下{game_name}好了")
+        # 使用 askyesno 來詢問玩家是否確定開始遊戲
+        result = messagebox.askyesno("開始遊戲", f"{game_name} 開始！是否確定進行遊戲？")
 
         # 進行遊戲邏輯處理
-
-        user_account = current_user
-
-        if game_name == "象棋":
+        if result:  # 當使用者選擇 "是"
             user_account = current_user
-            folder_path = "./chess_game_records"
-            os.makedirs(folder_path, exist_ok=True)
-            file_name = f"{str(user_account)}.encrypted"    
-            print("current before",current_user["score"])
-            if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄
-                saved_last_game = folder_path + "/" + file_name
-                print(f"檔案 {file_name} 存在於資料夾 {folder_path} 中。")
-            else:
-                saved_last_game = None
-                print(f"檔案 {file_name} 不存在於資料夾 {folder_path} 中。")
+            x = 0
 
-            chess_game_encrypted.main(user_account, saved_last_game)
-            #print("current",current_user["score"])
-            score = current_user["score"]
-        
-        elif game_name == "吹牛":
-            user_account = current_user
-            a = current_user['score']
-            print("current_user",current_user["score"])
-            game = DiceGame_V1.run(current_user)
-            #print("game",game)
-            print("current_user",current_user["score"])
-            score = current_user["score"]
-            x = score - a
-        elif game_name == "貪食蛇":
-            user_account = current_user['username']
+            # 發送開始遊戲通知
+            add_notification(f"遊戲開始：{game_name}，祝您玩得愉快！")
 
-            #貪食蛇_加入排行榜.get_player_name(user_account)
-            #貪食蛇_加入排行榜.main(current_user)
-            score = current_user["score"]
-        print("enter update")
-        update_score(score,game_name,x)
-    
+            if game_name == "象棋":
+                user_account = current_user['username']
+                a = current_user['score']
+                folder_path = "./chess_game_records"
+                os.makedirs(folder_path, exist_ok=True)
+                file_name = f"{str(user_account)}.encrypted"    
+                print("current before",current_user["score"])
+                if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄
+                    saved_last_game = folder_path + "/" + file_name
+                    print(f"檔案 {file_name} 存在於資料夾 {folder_path} 中。")
+                else:
+                    saved_last_game = None
+                    print(f"檔案 {file_name} 不存在於資料夾 {folder_path} 中。")
+
+                chess_game_encrypted_2p.main(user_account, saved_last_game)
+                #print("current",current_user["score"])
+                score = current_user["score"]
+                x = score - a 
+            
+            elif game_name == "吹牛":
+                user_account = current_user
+                a = current_user['score']
+                print("current_user",current_user["score"])
+                game = DiceGame_V1.run(current_user)
+                #print("game",game)
+                print("current_user",current_user["score"])
+                score = current_user["score"]
+                x = score - a
+            elif game_name == "貪食蛇":
+                user_account = current_user['username']
+
+                #貪食蛇_加入排行榜.get_player_name(user_account)
+                #貪食蛇_加入排行榜.main(current_user)
+                score = current_user["score"]
+            print("enter update")
+            update_score(score,game_name,x)
+
+        else:  # 如果使用者選擇 "否" 或關閉視窗
+            add_notification(f"突然不想玩{game_name}了")
+
     def update_score(score, game_name,x):
         #print()
         #current_user['score'] += score
@@ -429,7 +437,7 @@ def game_screen(current_user):
         save_users(users)
        
         add_notification(f"{game_name} 已結束，您的分數是：{x}")
-        if current_user['score'] >= 500:
+        if x >= 2000:
             add_notification("恭喜！您達成了高分成就！")
 
     def logout():
@@ -594,13 +602,16 @@ def game_screen(current_user):
     # 計算玩家升級所需的經驗
     level = current_user['level']
     
+    if current_user['score'] >= 2**(current_user['level'] - 1) * 1000:
+            current_user['score'] = current_user['score'] - 2**(current_user['level'] - 1) * 1000
+            current_user['level'] += 1
     required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
     # 顯示玩家資訊（包含等級和所需經驗）
     
     #player_info_label = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
     #tk.Label(player_info_frame, text=player_info_label, font=("Arial", 14), bg="#f0f8ff", anchor="w").grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="w")
     
-    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f5f5f5", anchor="w")
+    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f5f5f5", anchor="w")
     player_info_label.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
     # 顯示分數進度
