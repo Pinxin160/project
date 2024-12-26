@@ -501,36 +501,75 @@ def game_screen(current_user):
 
     # 打開排行榜視窗
     def show_leaderboard():
+        # 創建排行榜視窗
         leaderboard_window = tk.Toplevel(main_window)
         leaderboard_window.title("排行榜")
-        leaderboard_window.geometry("400x300")
-        
+        leaderboard_window.geometry("400x400")
+        leaderboard_window.configure(bg="#f5f5f5")  # 設置背景顏色
+
+        # 標題區域
+        title_frame = tk.Frame(leaderboard_window, bg="#4CAF50", pady=10)
+        title_frame.pack(fill="x")
+        tk.Label(
+            title_frame,
+            text="排行榜",
+            font=("Arial", 18, "bold"),
+            fg="white",
+            bg="#4CAF50"
+        ).pack()
+
+        # 內容區域
+        content_frame = tk.Frame(leaderboard_window, bg="#f5f5f5", padx=20, pady=10)
+        content_frame.pack(fill="both", expand=True)
+
         # 讀取 user.json 中的用戶資料
         with open("users.json", "r") as file:
             user_data = json.load(file)
 
-        tk.Label(leaderboard_window, text="排行榜", font=("Arial", 18, "bold")).pack(pady=10)
-
-        # 只提取用戶的分數
         users = user_data["users"]
 
-        # 根據分數排序
-        sorted_users = sorted(users, key=lambda user: user["score"], reverse=True)
+        # 根據分數排序，只取前 10 名
+        sorted_users = sorted(users, key=lambda user: user["score"], reverse=True)[:10]
 
         # 顯示排序後的玩家名稱和分數
         for idx, player in enumerate(sorted_users):
+            rank_color = "#FFD700" if idx == 0 else "#C0C0C0" if idx == 1 else "#CD7F32" if idx == 2 else "#f5f5f5"
+            player_frame = tk.Frame(content_frame, bg=rank_color, pady=5)
+            player_frame.pack(fill="x", pady=5)
+
             tk.Label(
-                leaderboard_window,
-                text=f"{idx + 1}. {player['username']} - 分數: {player['score']}",
-                font=("Arial", 12)
-        ).pack(anchor="w", padx=20)
+                player_frame,
+                text=f"{idx + 1}. {player['username']}",
+                font=("Arial", 12, "bold"),
+                anchor="w",
+                bg=rank_color
+            ).pack(side="left", padx=10)
+
+            tk.Label(
+                player_frame,
+                text=f"分數: {player['score']}",
+                font=("Arial", 12),
+                anchor="e",
+                bg=rank_color
+            ).pack(side="right", padx=10)
+
+        # 添加關閉按鈕
+        close_button = tk.Button(
+            leaderboard_window,
+            text="關閉",
+            font=("Arial", 12),
+            bg="#ff6347",
+            fg="white",
+            command=leaderboard_window.destroy
+        )
+        close_button.pack(pady=10)
 
     main_window = tk.Tk()
     main_window.title("遊戲選擇")
     main_window.geometry("800x600")
 
     # 加載背景圖片
-    bg_image = Image.open("background2.jpg")
+    bg_image = Image.open("background1.jpg")
     bg_image = bg_image.resize((800, 600))
     bg_photo = ImageTk.PhotoImage(bg_image)
     bg_label = tk.Label(main_window, image=bg_photo)
@@ -542,7 +581,8 @@ def game_screen(current_user):
 
     # 創建一個框架，用於顯示玩家資訊和分數條
     player_info_frame = tk.Frame(main_window, bg="#f0f8ff")
-    player_info_frame.grid(row=1, column=0, columnspan=3, padx=20, pady=20, sticky="w")
+    player_info_frame.place(x=120, y=90)
+    # player_info_frame.place(relx=0.5, rely=0.5, anchor="center")
 
     # 計算玩家升級所需的經驗
     level = current_user['level']
@@ -588,21 +628,44 @@ def game_screen(current_user):
 
     # 通知列表框
     notification_list = tk.Listbox(notification_frame, height=5, width=70, bg="#ffffff", selectmode=tk.SINGLE)
-    notification_list.grid(row=1, column=0, padx=10, pady=5, sticky="ew")
+    notification_list.grid(row=6, column=0, padx=10, pady=5, sticky="ew")
 
-    # 遊戲選項
-    tk.Button(main_window, text="貪食蛇", command=lambda: start_game("貪食蛇"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=5, column=0, padx=10, pady=10)
-    tk.Button(main_window, text="象棋", command=lambda: start_game("象棋"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=5, column=1, padx=10, pady=10)
-    tk.Button(main_window, text="吹牛", command=lambda: start_game("吹牛"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=5, column=2, padx=10, pady=10)
+    # 創建按鈕區域的 Frame 並使用 grid
+    buttons_frame = tk.Frame(main_window, bg="#f0f8ff")
+    buttons_frame.place(x=200, y=400)
 
-    # 顯示排行榜
-    tk.Button(main_window, text="排行榜", command=show_leaderboard, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=6, column=0, columnspan=2, pady=10)
+    # 設置 buttons_frame 的列權重以置中按鈕
+    buttons_frame.grid_columnconfigure(0, weight=1)
+    buttons_frame.grid_columnconfigure(1, weight=1)
+    buttons_frame.grid_columnconfigure(2, weight=1)
+    buttons_frame.grid_rowconfigure(0, weight=1)
+    buttons_frame.grid_rowconfigure(1, weight=1)
 
-    # 修改密碼按鈕
-    tk.Button(main_window, text="修改密碼", command=change_password, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=6, column=1, columnspan=2, pady=10)
+    # 第一排的按鈕
+    tk.Button(
+        buttons_frame, text="貪食蛇", command=lambda: start_game("貪食蛇"),
+        font=("Arial", 12), bg="#2196F3", fg="white", width=10, height=2).grid(row=0, column=0, padx=10, pady=10)
 
-    # 登出按鈕
-    tk.Button(main_window, text="登出", command=logout, font=("Arial", 12), bg="#ff6347", fg="white").grid(row=7, column=0, columnspan=2, pady=20)
+    tk.Button(
+        buttons_frame, text="象棋", command=lambda: start_game("象棋"),
+        font=("Arial", 12), bg="#2196F3", fg="white", width=10, height=2).grid(row=0, column=1, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="吹牛", command=lambda: start_game("吹牛"),
+        font=("Arial", 12), bg="#2196F3", fg="white", width=10, height=2).grid(row=0, column=2, padx=10, pady=10)
+
+    # 第二排的按鈕
+    tk.Button(
+        buttons_frame, text="排行榜", command=show_leaderboard,
+        font=("Arial", 12), bg="#4CAF50", fg="white", width=10, height=2).grid(row=1, column=0, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="修改密碼", command=change_password,
+        font=("Arial", 12), bg="#4CAF50", fg="white", width=10, height=2).grid(row=1, column=1, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="登出", command=logout,
+        font=("Arial", 12), bg="#ff6347", fg="white", width=10, height=2).grid(row=1, column=2, padx=10, pady=10)
 
     main_window.mainloop()
 
