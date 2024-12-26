@@ -386,7 +386,7 @@ def game_screen(current_user):
                     saved_last_game = None
                     print(f"檔案 {file_name} 不存在於資料夾 {folder_path} 中。")
 
-                chess_game_encrypted_2p.main(user_account, saved_last_game)
+                chess_game_encrypted_2p.main(current_user, saved_last_game)
                 #print("current",current_user["score"])
                 score = current_user["score"]
                 x = score - a 
@@ -428,6 +428,8 @@ def game_screen(current_user):
         player_info_label.config(text=player_info_label_text)
         upgrade_progress_label_text = f"升級進度: {current_user['score']} / {required_experience}"
         upgrade_progress_label.config(text=upgrade_progress_label_text)
+        score_label_text = f"分數: {current_user['score']}"
+        score_label.config(text=score_label_text)
         users = load_users()
         for user in users["users"]:
                 if user["username"] == current_user["username"]:
@@ -605,13 +607,12 @@ def game_screen(current_user):
     if current_user['score'] >= 2**(current_user['level'] - 1) * 1000:
             current_user['score'] = current_user['score'] - 2**(current_user['level'] - 1) * 1000
             current_user['level'] += 1
+            
     required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
+
+
     # 顯示玩家資訊（包含等級和所需經驗）
-    
-    #player_info_label = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
-    #tk.Label(player_info_frame, text=player_info_label, font=("Arial", 14), bg="#f0f8ff", anchor="w").grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="w")
-    
-    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f5f5f5", anchor="w")
+    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f0f8ff", anchor="w")
     player_info_label.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
     # 顯示分數進度
