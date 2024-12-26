@@ -73,7 +73,7 @@ def login_screen():
 
     # 密碼顯示/隱藏按鈕
     toggle_button = tk.Button(input_frame, text="顯示", command=lambda: toggle_password_visibility(password_entry, toggle_button),
-                            font=("Arial", 9, "bold"), bg="#ffcc00", fg="white", relief="flat", width=6, height=1)
+                            font=("Arial", 9, "bold"), bg="#ffcc00", fg="white", relief="ridge", width=6, height=1)
     toggle_button.grid(row=1, column=2, padx=5, pady=5)
 
     # 登入按鈕
@@ -85,7 +85,7 @@ def login_screen():
     register_button.grid(row=2, column=1, padx=5, pady=5, sticky="e")
 
     # 忘記密碼按鈕
-    forgot_password_button = tk.Button(input_frame, text="忘記密碼?", command=switch_to_forgot_password, font=("Arial", 9, "bold"), bg="#ff6347", fg="white", relief="flat")
+    forgot_password_button = tk.Button(input_frame, text="忘記密碼?", command=switch_to_forgot_password, font=("Arial", 9, "bold"), bg="#ff6347", fg="white", relief="ridge")
     forgot_password_button.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
 
     # 顯示視窗
@@ -379,7 +379,7 @@ def game_screen(current_user):
         # 彈出修改密碼視窗
         change_password_window = tk.Toplevel(main_window)
         change_password_window.title("修改密碼")
-        change_password_window.geometry("400x250")
+        change_password_window.geometry("350x200")
         change_password_window.configure(bg="#f0f8ff")  # 淡藍色背景
 
         # 標籤與輸入框
