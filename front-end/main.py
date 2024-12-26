@@ -411,7 +411,7 @@ def game_screen(current_user):
             current_user['level'] += 1
 
         # 更新玩家資訊顯示
-        player_info_label_text = f"玩家名稱: {current_user['username']}\n等級: {current_user['level']}\n分數: {current_user['score']}"
+        player_info_label_text = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
         player_info_label.config(text=player_info_label_text)
         users = load_users()
         for user in users["users"]:
