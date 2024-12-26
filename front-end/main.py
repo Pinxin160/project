@@ -353,7 +353,7 @@ def stop_music():
     pygame.mixer.music.stop()
 
 
-from game import chess_game_encrypted
+import chess_game_encrypted, DiceGame_V1, os #, 貪食蛇_加入排行榜
 import os #, 貪食蛇_加入排行榜
 
 def game_screen(current_user):
@@ -388,31 +388,38 @@ def game_screen(current_user):
         
         elif game_name == "吹牛":
             user_account = current_user
+            a = current_user['score']
             print("current_user",current_user["score"])
             game = DiceGame_V1.run(current_user)
             #print("game",game)
             print("current_user",current_user["score"])
             score = current_user["score"]
-
+            x = score - a
         elif game_name == "貪食蛇":
             user_account = current_user['username']
 
             #貪食蛇_加入排行榜.get_player_name(user_account)
             #貪食蛇_加入排行榜.main(current_user)
             score = current_user["score"]
-        
-        update_score(score)
+        print("enter update")
+        update_score(score,game_name,x)
     
-    def update_score(score, game_name):
+    def update_score(score, game_name,x):
         #print()
         #current_user['score'] += score
+        print("enter before if")
+        
         if current_user['score'] >= 2**(current_user['level'] - 1) * 1000:
             current_user['score'] = current_user['score'] - 2**(current_user['level'] - 1) * 1000
             current_user['level'] += 1
-
+        print("current_user",current_user['score'] )
+        print("level",current_user['level'])
+        required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
         # 更新玩家資訊顯示
-        player_info_label_text = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
+        player_info_label_text = f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
         player_info_label.config(text=player_info_label_text)
+        upgrade_progress_label_text = f"升級進度: {current_user['score']} / {required_experience}"
+        upgrade_progress_label.config(text=upgrade_progress_label_text)
         users = load_users()
         for user in users["users"]:
                 if user["username"] == current_user["username"]:
@@ -421,7 +428,7 @@ def game_screen(current_user):
                     break
         save_users(users)
        
-        add_notification(f"{game_name} 已結束，您的分數是：{current_user['score']}")
+        add_notification(f"{game_name} 已結束，您的分數是：{x}")
         if current_user['score'] >= 500:
             add_notification("恭喜！您達成了高分成就！")
 
@@ -586,11 +593,15 @@ def game_screen(current_user):
 
     # 計算玩家升級所需的經驗
     level = current_user['level']
-    required_experience = 2**(level - 1) * 1000  # 公式: 2^(L-1) * 1000
-
+    
+    required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
     # 顯示玩家資訊（包含等級和所需經驗）
-    player_info_label = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
-    tk.Label(player_info_frame, text=player_info_label, font=("Arial", 14), bg="#f0f8ff", anchor="w").grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+    
+    #player_info_label = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
+    #tk.Label(player_info_frame, text=player_info_label, font=("Arial", 14), bg="#f0f8ff", anchor="w").grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+    
+    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f5f5f5", anchor="w")
+    player_info_label.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
     # 顯示分數進度
     tk.Label(player_info_frame, text="分數進度", font=("Arial", 12), bg="#f0f8ff").grid(row=1, column=0, padx=10, pady=10, sticky="w")
@@ -605,7 +616,7 @@ def game_screen(current_user):
     score_label.grid(row=1, column=2, padx=10, pady=10, sticky="w")
 
     # 顯示升級進度
-    upgrade_progress_label = tk.Label(player_info_frame, text=f"升級進度: {current_user['score']} / {required_experience}", font=("Arial", 12), bg="#e0ffe0")
+    upgrade_progress_label = tk.Label(player_info_frame, text=f"升級進度: {current_user['score']} / {2**(current_user['level'] - 1) * 1000}", font=("Arial", 12), bg="#e0ffe0")
     upgrade_progress_label.grid(row=2, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
 
     # 使用顏色區隔：背景顏色不同
