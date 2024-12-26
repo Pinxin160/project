@@ -1,7 +1,11 @@
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
+from pygame import mixer
 from PIL import Image, ImageTk
+import json
 from user_manager import initialize_data, login, register, load_users, save_users
+
 
 
 def toggle_password_visibility(password_entry, toggle_button):
@@ -73,7 +77,7 @@ def login_screen():
 
     # 密碼顯示/隱藏按鈕
     toggle_button = tk.Button(input_frame, text="顯示", command=lambda: toggle_password_visibility(password_entry, toggle_button),
-                            font=("Arial", 9, "bold"), bg="#ffcc00", fg="white", relief="flat", width=6, height=1)
+                            font=("Arial", 9, "bold"), bg="#ffcc00", fg="white", relief="ridge", width=6, height=1)
     toggle_button.grid(row=1, column=2, padx=5, pady=5)
 
     # 登入按鈕
@@ -85,7 +89,7 @@ def login_screen():
     register_button.grid(row=2, column=1, padx=5, pady=5, sticky="e")
 
     # 忘記密碼按鈕
-    forgot_password_button = tk.Button(input_frame, text="忘記密碼?", command=switch_to_forgot_password, font=("Arial", 9, "bold"), bg="#ff6347", fg="white", relief="flat")
+    forgot_password_button = tk.Button(input_frame, text="忘記密碼?", command=switch_to_forgot_password, font=("Arial", 9, "bold"), bg="#ff6347", fg="white", relief="ridge")
     forgot_password_button.grid(row=3, column=1, padx=5, pady=5, sticky="ew")
 
     # 顯示視窗
@@ -338,18 +342,37 @@ def register_screen():
 
     main_window.mainloop()
 
+
+# 播放背景音樂
+def play_music():
+    pygame.mixer.init()
+    pygame.mixer.music.load("background_music.mp3")  # 確保路徑正確
+    pygame.mixer.music.play(-1)  # 循環播放
+
+def stop_music():
+    pygame.mixer.music.stop()
+
+
 import chess_game_encrypted, DiceGame_V1, os #, 貪食蛇_加入排行榜
+import os #, 貪食蛇_加入排行榜
 
 def game_screen(current_user):
 
     def start_game(game_name):
+
+        # 發送開始遊戲通知
+        add_notification(f"遊戲開始：{game_name}，祝您玩得愉快！")
+
         messagebox.showinfo("開始遊戲", f"{game_name} 開始！")
-        # 根據遊戲名稱進行相應的遊戲邏輯處理
+
+        # 進行遊戲邏輯處理
+
         user_account = current_user
 
         if game_name == "象棋":
             user_account = current_user
             folder_path = "./chess_game_records"
+            os.makedirs(folder_path, exist_ok=True)
             file_name = f"{str(user_account)}.encrypted"    
             print("current before",current_user["score"])
             if file_name in os.listdir(folder_path): # 找目前這個使用者是否有上一次的象棋遊戲紀錄
@@ -365,31 +388,38 @@ def game_screen(current_user):
         
         elif game_name == "吹牛":
             user_account = current_user
+            a = current_user['score']
             print("current_user",current_user["score"])
             game = DiceGame_V1.run(current_user)
             #print("game",game)
             print("current_user",current_user["score"])
             score = current_user["score"]
-
+            x = score - a
         elif game_name == "貪食蛇":
             user_account = current_user['username']
 
             #貪食蛇_加入排行榜.get_player_name(user_account)
             #貪食蛇_加入排行榜.main(current_user)
             score = current_user["score"]
-        
-        update_score(score)
+        print("enter update")
+        update_score(score,game_name,x)
     
-    def update_score(score):
+    def update_score(score, game_name,x):
         #print()
         #current_user['score'] += score
+        print("enter before if")
+        
         if current_user['score'] >= 2**(current_user['level'] - 1) * 1000:
             current_user['score'] = current_user['score'] - 2**(current_user['level'] - 1) * 1000
             current_user['level'] += 1
-
+        print("current_user",current_user['score'] )
+        print("level",current_user['level'])
+        required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
         # 更新玩家資訊顯示
-        player_info_label_text = f"玩家名稱: {current_user['username']}\n等級: {current_user['level']}\n分數: {current_user['score']}"
+        player_info_label_text = f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
         player_info_label.config(text=player_info_label_text)
+        upgrade_progress_label_text = f"升級進度: {current_user['score']} / {required_experience}"
+        upgrade_progress_label.config(text=upgrade_progress_label_text)
         users = load_users()
         for user in users["users"]:
                 if user["username"] == current_user["username"]:
@@ -397,12 +427,16 @@ def game_screen(current_user):
                     user["level"] = current_user['level']
                     break
         save_users(users)
+       
+        add_notification(f"{game_name} 已結束，您的分數是：{x}")
+        if current_user['score'] >= 500:
+            add_notification("恭喜！您達成了高分成就！")
 
     def logout():
         main_window.destroy()
-        login_screen()  # 登出後返回登入界面
+        login_screen()
 
-       # 修改密碼
+    # 修改密碼
     def change_password():
 
         def handle_change_password():
@@ -432,7 +466,7 @@ def game_screen(current_user):
         # 彈出修改密碼視窗
         change_password_window = tk.Toplevel(main_window)
         change_password_window.title("修改密碼")
-        change_password_window.geometry("400x250")
+        change_password_window.geometry("350x200")
         change_password_window.configure(bg="#f0f8ff")  # 淡藍色背景
 
         # 標籤與輸入框
@@ -461,36 +495,188 @@ def game_screen(current_user):
         # 確認修改密碼按鈕
         tk.Button(change_password_window, text="確認修改", command=handle_change_password, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=4, column=0, columnspan=3, pady=20)
 
+    # 更新通知中心
+    def add_notification(message):
+        notification_list.insert(tk.END, message)
+        notification_list.see(tk.END)  # 滾動至最新通知
+
+    # 更新分數條
+    def update_score_bar(new_score):
+        current_user['score'] = new_score
+        score_bar['value'] = new_score
+        score_label.config(text=f"分數: {new_score}")
+
+    # 打開排行榜視窗
+    def show_leaderboard():
+        # 創建排行榜視窗
+        leaderboard_window = tk.Toplevel(main_window)
+        leaderboard_window.title("排行榜")
+        leaderboard_window.geometry("400x400")
+        leaderboard_window.configure(bg="#f5f5f5")  # 設置背景顏色
+
+        # 標題區域
+        title_frame = tk.Frame(leaderboard_window, bg="#4CAF50", pady=10)
+        title_frame.pack(fill="x")
+        tk.Label(
+            title_frame,
+            text="排行榜",
+            font=("Arial", 18, "bold"),
+            fg="white",
+            bg="#4CAF50"
+        ).pack()
+
+        # 內容區域
+        content_frame = tk.Frame(leaderboard_window, bg="#f5f5f5", padx=20, pady=10)
+        content_frame.pack(fill="both", expand=True)
+
+        # 讀取 user.json 中的用戶資料
+        with open("users.json", "r") as file:
+            user_data = json.load(file)
+
+        users = user_data["users"]
+
+        # 根據分數排序，只取前 10 名
+        sorted_users = sorted(users, key=lambda user: user["score"], reverse=True)[:10]
+
+        # 顯示排序後的玩家名稱和分數
+        for idx, player in enumerate(sorted_users):
+            rank_color = "#FFD700" if idx == 0 else "#C0C0C0" if idx == 1 else "#CD7F32" if idx == 2 else "#f5f5f5"
+            player_frame = tk.Frame(content_frame, bg=rank_color, pady=5)
+            player_frame.pack(fill="x", pady=5)
+
+            tk.Label(
+                player_frame,
+                text=f"{idx + 1}. {player['username']}",
+                font=("Arial", 12, "bold"),
+                anchor="w",
+                bg=rank_color
+            ).pack(side="left", padx=10)
+
+            tk.Label(
+                player_frame,
+                text=f"分數: {player['score']}",
+                font=("Arial", 12),
+                anchor="e",
+                bg=rank_color
+            ).pack(side="right", padx=10)
+
+        # 添加關閉按鈕
+        close_button = tk.Button(
+            leaderboard_window,
+            text="關閉",
+            font=("Arial", 12),
+            bg="#ff6347",
+            fg="white",
+            command=leaderboard_window.destroy
+        )
+        close_button.pack(pady=10)
+
     main_window = tk.Tk()
     main_window.title("遊戲選擇")
-    main_window.geometry("500x500")
+    main_window.geometry("800x600")
 
     # 加載背景圖片
-    bg_image = Image.open("background2.jpg")  # 確保圖片路徑正確
-    bg_image = bg_image.resize((500, 500))  # 調整背景大小適應視窗
+    bg_image = Image.open("background1.jpg")
+    bg_image = bg_image.resize((800, 600))
     bg_photo = ImageTk.PhotoImage(bg_image)
-
     bg_label = tk.Label(main_window, image=bg_photo)
-    bg_label.place(relwidth=1, relheight=1)  # 設定背景圖片填滿整個視窗
+    bg_label.place(relwidth=1, relheight=1)
 
-    # 顯示玩家資訊
-    # 顯示玩家資訊
-    player_info_label = tk.Label(main_window, text=f"玩家名稱: {current_user['username']}\n等級: {current_user['level']}\n分數: {current_user['score']}",font=("Arial", 14), bg="#f5f5f5", anchor="w")
-    player_info_label.grid(row=0, column=0, columnspan=2, padx=20, pady=20)
+    # # 播放音樂按鈕
+    # tk.Button(main_window, text="播放音樂", command=play_music, font=("Arial", 12)).grid(row=0, column=0, padx=10, pady=10)
+    # tk.Button(main_window, text="停止音樂", command=stop_music, font=("Arial", 12)).grid(row=0, column=1, padx=10, pady=10)
 
-    # 顯示遊戲選擇界面標題
-    tk.Label(main_window, text="選擇一個遊戲", font=("Arial", 18, "bold"), bg="#f5f5f5").grid(row=1, column=0, columnspan=2, pady=20)
+    # 創建一個框架，用於顯示玩家資訊和分數條
+    player_info_frame = tk.Frame(main_window, bg="#f0f8ff")
+    player_info_frame.place(x=120, y=90)
+    # player_info_frame.place(relx=0.5, rely=0.5, anchor="center")
 
-    # 修改密碼按鈕
-    tk.Button(main_window, text="修改密碼", command=change_password, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=2, column=0, columnspan=2, pady=10)
+    # 計算玩家升級所需的經驗
+    level = current_user['level']
+    
+    required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
+    # 顯示玩家資訊（包含等級和所需經驗）
+    
+    #player_info_label = f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
+    #tk.Label(player_info_frame, text=player_info_label, font=("Arial", 14), bg="#f0f8ff", anchor="w").grid(row=0, column=0, columnspan=3, padx=10, pady=10, sticky="w")
+    
+    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {level}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f5f5f5", anchor="w")
+    player_info_label.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
-    # 遊戲選項按鈕
-    tk.Button(main_window, text="貪食蛇", command=lambda: start_game("貪食蛇"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=3, column=0, columnspan=2, pady=10)
-    tk.Button(main_window, text="象棋", command=lambda: start_game("象棋"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=4, column=0, columnspan=2, pady=10)
-    tk.Button(main_window, text="吹牛", command=lambda: start_game("吹牛"), font=("Arial", 12), bg="#2196F3", fg="white").grid(row=5, column=0, columnspan=2, pady=10)
+    # 顯示分數進度
+    tk.Label(player_info_frame, text="分數進度", font=("Arial", 12), bg="#f0f8ff").grid(row=1, column=0, padx=10, pady=10, sticky="w")
 
-    # 登出按鈕
-    tk.Button(main_window, text="登出", command=logout, font=("Arial", 12), bg="#ff6347", fg="white").grid(row=6, column=0, columnspan=2, pady=20)
+    # 動態分數條
+    score_bar = ttk.Progressbar(player_info_frame, orient="horizontal", length=200, mode="determinate", maximum=required_experience)
+    score_bar.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+    score_bar['value'] = current_user['score']
+
+    # 顯示分數
+    score_label = tk.Label(player_info_frame, text=f"分數: {current_user['score']}", font=("Arial", 12), bg="#f0f8ff")
+    score_label.grid(row=1, column=2, padx=10, pady=10, sticky="w")
+
+    # 顯示升級進度
+    upgrade_progress_label = tk.Label(player_info_frame, text=f"升級進度: {current_user['score']} / {2**(current_user['level'] - 1) * 1000}", font=("Arial", 12), bg="#e0ffe0")
+    upgrade_progress_label.grid(row=2, column=0, columnspan=3, padx=10, pady=5, sticky="ew")
+
+    # 使用顏色區隔：背景顏色不同
+    score_bar['style'] = 'TProgressbar'
+
+    # 設置分數條的顏色（樣式需要先創建）
+    style = ttk.Style()
+    style.configure("TProgressbar",
+                    thickness=20, 
+                    background="#4CAF50",  # 綠色進度條
+                    )
+
+
+    # 通知中心區域（區隔背景顏色）
+    notification_frame = tk.Frame(player_info_frame, bg="#f9f9f9", relief="solid", bd=1)
+    notification_frame.grid(row=3, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
+
+    # 通知標題
+    tk.Label(notification_frame, text="通知中心", font=("Arial", 12, "bold"), bg="#f9f9f9").grid(row=0, column=0, padx=10, pady=5, sticky="w")
+
+    # 通知列表框
+    notification_list = tk.Listbox(notification_frame, height=5, width=70, bg="#ffffff", selectmode=tk.SINGLE)
+    notification_list.grid(row=6, column=0, padx=10, pady=5, sticky="ew")
+
+    # 創建按鈕區域的 Frame 並使用 grid
+    buttons_frame = tk.Frame(main_window, bg="#f0f8ff")
+    buttons_frame.place(x=200, y=400)
+
+    # 設置 buttons_frame 的列權重以置中按鈕
+    buttons_frame.grid_columnconfigure(0, weight=1)
+    buttons_frame.grid_columnconfigure(1, weight=1)
+    buttons_frame.grid_columnconfigure(2, weight=1)
+    buttons_frame.grid_rowconfigure(0, weight=1)
+    buttons_frame.grid_rowconfigure(1, weight=1)
+
+    # 第一排的按鈕
+    tk.Button(
+        buttons_frame, text="貪食蛇", command=lambda: start_game("貪食蛇"),
+        font=("Arial", 12), bg="#2196F3", fg="white", width=10, height=2).grid(row=0, column=0, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="象棋", command=lambda: start_game("象棋"),
+        font=("Arial", 12), bg="#2196F3", fg="white", width=10, height=2).grid(row=0, column=1, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="吹牛", command=lambda: start_game("吹牛"),
+        font=("Arial", 12), bg="#2196F3", fg="white", width=10, height=2).grid(row=0, column=2, padx=10, pady=10)
+
+    # 第二排的按鈕
+    tk.Button(
+        buttons_frame, text="排行榜", command=show_leaderboard,
+        font=("Arial", 12), bg="#4CAF50", fg="white", width=10, height=2).grid(row=1, column=0, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="修改密碼", command=change_password,
+        font=("Arial", 12), bg="#4CAF50", fg="white", width=10, height=2).grid(row=1, column=1, padx=10, pady=10)
+
+    tk.Button(
+        buttons_frame, text="登出", command=logout,
+        font=("Arial", 12), bg="#ff6347", fg="white", width=10, height=2).grid(row=1, column=2, padx=10, pady=10)
 
     main_window.mainloop()
 
