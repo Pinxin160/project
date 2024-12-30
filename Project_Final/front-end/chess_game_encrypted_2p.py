@@ -1252,12 +1252,14 @@ def main(user_file, saved_last_game):
                 game = ChessGame(root, piece_ranks, user_file, saved_last_game)
             else:
                 game = ChessGame(root, piece_ranks, user_file, saved_last_game=None)
+            root.withdraw()
         else:
             # 如果沒有遊戲紀錄，直接開始新遊戲
-            messagebox.showinfo("提示", "未檢測到遊戲紀錄，將開始新遊戲。")
-            game = ChessGame(root, piece_ranks, user_file, saved_last_game=None)
-
-        root.withdraw()
+            # messagebox.showinfo("提示", "未檢測到遊戲紀錄，將開始新遊戲。")
+            response = messagebox.askokcancel("提示", "未檢測到遊戲紀錄，是否確認開始新遊戲？")
+            if response:  # 用戶點擊「確認」
+                game = ChessGame(root, piece_ranks, user_file, saved_last_game=None)
+                root.withdraw()
 
     def on_start_game_2p():
 
