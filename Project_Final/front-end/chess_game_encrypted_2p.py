@@ -1297,16 +1297,17 @@ def main(user_file, saved_last_game):
             print("執行 login_for_2p")
             nonlocal user2_file
             user2_username = username_entry.get()
+            print(type(user2_username))
             user2_password = password_entry.get()
             if login(user2_username, user2_password):
-                # 取得玩家資料
-                users = load_users()
-                user2_file = next(user for user in users["users"] if user["username"] == user2_username)
-                login2.destroy()
-                messagebox.showinfo("成功", f"{user2_username} 登入成功，開始雙人遊戲！")
-                game = ChessGame_2p(root, piece_ranks, user_file, user2_file)
-            elif user2_username == user_file['username']:
-                messagebox.showerror("錯誤", f"必須輸入和第一位玩家不同的帳號！")
+                if user2_username == user_file['username']:
+                    messagebox.showerror("錯誤", f"必須輸入和第一位玩家不同的帳號！")
+                else: # 取得玩家資料
+                    users = load_users()
+                    user2_file = next(user for user in users["users"] if user["username"] == user2_username)
+                    login2.destroy()
+                    messagebox.showinfo("成功", f"{user2_username} 登入成功，開始雙人遊戲！")
+                    game = ChessGame_2p(root, piece_ranks, user_file, user2_file)
             else:
                 messagebox.showerror("錯誤", "帳號或密碼錯誤！")
 
