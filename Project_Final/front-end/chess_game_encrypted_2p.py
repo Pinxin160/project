@@ -25,7 +25,7 @@ class ChessGame:
         self.bind_keys()
         
         # Create a canvas for the chessboard
-        self.canvas = tk.Canvas(self.game_window, width=800, height=400)
+        self.canvas = tk.Canvas(self.game_window, width=800, height=480)
         self.canvas.pack()
         self.canvas.bind("<Button-1>", self.handle_click_event)  # 綁定事件
         
@@ -38,7 +38,9 @@ class ChessGame:
         # Create a label to show the turn status at the bottom left corner
         self.game_window.after(100)
         self.turn_label = tk.Label(self.game_window, text=f"目前輪到: ", font=("Arial", 14))
-        self.turn_label.place(x=10, y=370)  # 直接指定標籤的絕對位置
+        self.turn_label.place(x=10, y=410)  # 直接指定標籤的絕對位置
+        self.no_capture_label = tk.Label(self.game_window, text=f"連續移動或翻棋次數: ", font=("Arial", 14))
+        self.no_capture_label.place(x=10, y=435)  # 直接指定標籤的絕對位置
         self.game_window.update_idletasks()
         self.game_window.geometry(f"{self.game_window.winfo_width()}x{self.game_window.winfo_height()}+{self.game_window.winfo_x()}+{self.game_window.winfo_y()}")
 
@@ -317,6 +319,9 @@ class ChessGame:
                     self.player_color = selected_piece_info["color"]
                     self.computer_color = "red" if self.player_color == "black" else "black"
                     print(f"玩家顏色: {self.player_color}，電腦顏色: {self.computer_color}")
+                self.no_capture += 1
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
+                self.check_game_over()
                 self.switch_turn() # 移動後取消選擇的棋子，切換到電腦回合
         
     def reveal_piece(self, piece_id):
@@ -403,6 +408,8 @@ class ChessGame:
                 self.root.update()
                 self.root.after(1000)
             if self.capture_piece(from_piece_id, target_piece_id): # 吃子成功後判斷是否還能吃
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 if self.pieces[from_piece_id]['name'] in ["炮", "包"]:
                     if self.cannon_continue_capture(from_piece_id): # 如果可以繼續吃子讓玩家決定是否繼續
                         continue_eat = self.prompt_continue_eating() if self.current_turn == "player" else True
@@ -428,9 +435,9 @@ class ChessGame:
                         print("無法繼續吃子，結束本次操作。")
                         return True  # 玩家結束操作
             else:
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 print("未能成功吃子")
-                self.no_capture += 1
-                self.check_game_over()
             return True
         elif self.cnt != 0:
             print("玩家不能再移動了。")
@@ -445,6 +452,10 @@ class ChessGame:
         self.canvas.move(self.pieces[from_piece_id]["text_id"], dx, dy)
         self.selected_piece = None  # 移動後取消選擇的棋子
 
+        self.no_capture += 1
+        self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
+        self.check_game_over()
+        print(f"此時次數: {self.no_capture}")
         print("移動成功到空格。")
         return True
     
@@ -724,6 +735,9 @@ class ChessGame:
                 to_reveal_id = random.choice(facedown_pieces_id)
                 self.reveal_piece(to_reveal_id)
                 print(f"在 {self.pieces[to_reveal_id]['position']} 翻開了一顆棋子: {self.pieces[to_reveal_id]['name']}")
+                self.no_capture += 1
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
+                self.check_game_over()
                 self.switch_turn()
                 return
 
@@ -746,7 +760,7 @@ class ChessGame_2p:
         self.bind_keys()
         
         # Create a canvas for the chessboard
-        self.canvas = tk.Canvas(self.game_window, width=800, height=400)
+        self.canvas = tk.Canvas(self.game_window, width=800, height=480)
         self.canvas.pack()
         self.canvas.bind("<Button-1>", self.handle_click_event)  # 綁定事件
         
@@ -756,7 +770,9 @@ class ChessGame_2p:
         # Create a label to show the turn status at the bottom left corner
         self.game_window.after(100)
         self.turn_label = tk.Label(self.game_window, text=f"目前輪到: ", font=("Arial", 14))
-        self.turn_label.place(x=10, y=370)  # 直接指定標籤的絕對位置
+        self.turn_label.place(x=10, y=410)  # 直接指定標籤的絕對位置
+        self.no_capture_label = tk.Label(self.game_window, text=f"連續移動或翻棋次數: ", font=("Arial", 14))
+        self.no_capture_label.place(x=10, y=435)  # 直接指定標籤的絕對位置
         self.game_window.update_idletasks()
         self.game_window.geometry(f"{self.game_window.winfo_width()}x{self.game_window.winfo_height()}+{self.game_window.winfo_x()}+{self.game_window.winfo_y()}")
 
@@ -941,6 +957,9 @@ class ChessGame_2p:
                     self.player1_color = selected_piece_info["color"]
                     self.player2_color = "red" if self.player1_color == "black" else "black"
                     print(f"{self.user_account} 玩家顏色: {self.player1_color}，{self.second_user_account} 顏色: {self.player2_color}")
+                self.no_capture += 1
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
+                self.check_game_over()
                 self.switch_turn() # 移動後取消選擇的棋子，切換到電腦回合
         
     def reveal_piece(self, piece_id):
@@ -1027,6 +1046,8 @@ class ChessGame_2p:
                 self.root.update()
                 self.root.after(1000)
             if self.capture_piece(from_piece_id, target_piece_id): # 吃子成功後判斷是否還能吃
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 if self.pieces[from_piece_id]['name'] in ["炮", "包"]:
                     if self.cannon_continue_capture(from_piece_id): # 如果可以繼續吃子讓玩家決定是否繼續
                         continue_eat = self.prompt_continue_eating()
@@ -1052,9 +1073,9 @@ class ChessGame_2p:
                         print("無法繼續吃子，結束本次操作。")
                         return True  # 玩家結束操作
             else:
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 print("未能成功吃子")
-                self.no_capture += 1
-                self.check_game_over()
             return True
         elif self.cnt != 0:
             print("玩家不能再移動了。")
@@ -1069,6 +1090,9 @@ class ChessGame_2p:
         self.canvas.move(self.pieces[from_piece_id]["text_id"], dx, dy)
         self.selected_piece = None  # 移動後取消選擇的棋子
 
+        self.no_capture += 1
+        self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
+        self.check_game_over()
         print("移動成功到空格。")
         return True
     
@@ -1109,6 +1133,8 @@ class ChessGame_2p:
             if attacking_piece["name"] in ["炮", "包"] and self.cannon_validate_move(attacking_piece, defending_piece):
                 self.perform_capture(from_piece_id, target_piece_id)
                 print("炮 (包) 成功吃子~")
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 return True
             
             # 處理特殊例外2：帥(將)不能吃卒(兵)，但“卒” (兵)可以吃“帥” (將)。
@@ -1118,6 +1144,8 @@ class ChessGame_2p:
             if attacking_piece["name"] in ["卒", "兵"] and defending_piece["name"] in ["帥", "將"]:
                 self.perform_capture(from_piece_id, target_piece_id)
                 print("卒 (兵) 成功吃掉 帥 (將)~")
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 return True
             
             # 根據等級判斷是否能吃
@@ -1126,6 +1154,8 @@ class ChessGame_2p:
             if attacking_rank >= defending_rank:
                 self.perform_capture(from_piece_id, target_piece_id)
                 print("成功吃子~")
+                self.no_capture = 0
+                self.no_capture_label.config(text=f"連續移動或翻棋次數: {self.no_capture}")
                 return True  # 成功吃子
             else:
                 print("等級不夠高無法吃子...")
