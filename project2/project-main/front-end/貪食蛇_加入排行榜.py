@@ -1,6 +1,7 @@
-import pygame
 import random
+import sys
 import json
+import pygame
 
 # 初始化 Pygame
 pygame.init()
@@ -27,14 +28,6 @@ items = []
 score = 0
 game_running = False
 game_paused = False
-
-# 玩家資料
-player_name = "Player"  # 玩家名稱（可修改為輸入功能）
-player_data = {
-    "level": 1,
-    "experience": 0,
-    "history_score": 0
-}
 
 # 排行榜檔案路徑
 LEADERBOARD_FILE = "leaderboard.json"
@@ -76,6 +69,7 @@ FPS_INCREASE_RATE = 1  # 每增加30分，增加1幀率
 
 # 更新蛇的位置
 def update_snake():
+
     global score, running, FPS
 
     # 根據分數調整FPS，分數越高，FPS越大
@@ -198,68 +192,6 @@ def draw_game_state():
     screen.blit(score_text, (10, 10))
     pygame.display.flip()
 
-def game_over():
-    global game_running
-
-    # 更新排行榜
-    update_leaderboard(player_name, score)
-
-    # 從檔案讀取排行榜數據
-    try:
-        with open(LEADERBOARD_FILE, "r") as f:
-            leaderboard = json.load(f)
-    except FileNotFoundError:
-        leaderboard = {}
-
-    # 排行榜排序（按分數降序）
-    sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
-    top_players = sorted_leaderboard[:5]  # 取前 5 名
-
-    # 顯示遊戲結束畫面
-    screen.fill(BG_COLOR)
-    font = pygame.font.SysFont(None, 50)
-
-    # 顯示 "GAME OVER"
-    game_over_text = font.render("GAME OVER", True, (255, 0, 0))
-    screen.blit(game_over_text, (SCREEN_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 6))
-
-    # 顯示分數
-    score_text = font.render(f"Your Score: {score}", True, (255, 255, 255))
-    screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 4))
-
-    # 顯示排行榜
-    leaderboard_title = font.render("Leaderboard", True, (255, 255, 0))
-    screen.blit(leaderboard_title, (SCREEN_WIDTH // 2 - leaderboard_title.get_width() // 2, SCREEN_HEIGHT // 3))
-
-    y_offset = SCREEN_HEIGHT // 3 + 50
-    for idx, (player, score) in enumerate(top_players, start=1):
-        player_score_text = font.render(f"{idx}. {player}: {score}", True, (255, 255, 255))
-        screen.blit(player_score_text, (SCREEN_WIDTH // 2 - player_score_text.get_width() // 2, y_offset))
-        y_offset += 40
-
-    # 提示重新開始或退出
-    restart_text = font.render("Press R to Restart", True, (255, 255, 255))
-    quit_text = font.render("Press Q to Quit", True, (255, 255, 255))
-    screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT - 100))
-    screen.blit(quit_text, (SCREEN_WIDTH // 2 - quit_text.get_width() // 2, SCREEN_HEIGHT - 50))
-
-    pygame.display.flip()
-
-    # 等待玩家輸入
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # 重新開始遊戲
-                    reset_game()
-                    game_running = True
-                    waiting = False
-                elif event.key == pygame.K_q:  # 離開遊戲
-                    pygame.quit()
-                    exit()
 
 # 猜數字遊戲
 def guess_number_game():
@@ -352,7 +284,7 @@ def guess_number_game():
             feedback = "FAIL >< Minus 2 points"
             game_over_message(feedback)
             return
-
+        
 # 顯示遊戲結束訊息
 def game_over_message(message):
     font = pygame.font.SysFont(None, 72)
@@ -360,168 +292,190 @@ def game_over_message(message):
     result_text = font.render(message, True, (255, 255, 255))
     screen.blit(result_text, (SCREEN_WIDTH // 2 - result_text.get_width() // 2, SCREEN_HEIGHT // 2))
     pygame.display.flip()
-    pygame.time.wait(2500)  # 停留 3 秒後返回遊戲
+    pygame.time.wait(2500)  # 返回遊戲
+
 
 LEADERBOARD_FILE = "leaderboard.json"
 
 # 更新排行榜
 def update_leaderboard(player_name, score):
     leaderboard = load_leaderboard()
-    leaderboard[player_name] = max(score, leaderboard.get(player_name, 0))  # 確保最高分
+    leaderboard[player_name] = max(score, leaderboard.get(player_name, 0))  # 更新最高分
     with open(LEADERBOARD_FILE, "w") as f:
-        json.dump(leaderboard, f)
+        json.dump(leaderboard, f, indent=4)
+
 # 讀取排行榜
 def load_leaderboard():
     try:
         with open(LEADERBOARD_FILE, "r") as f:
             leaderboard = json.load(f)
-            if not isinstance(leaderboard, dict):  # 確保 leaderboard 是字典
-                leaderboard = {}
-    except FileNotFoundError:
-        leaderboard = {}  # 若檔案不存在，初始化為空字典
+        if not isinstance(leaderboard, dict):  # 檢查檔案格式
+            leaderboard = {}
+    except (FileNotFoundError, json.JSONDecodeError):
+        leaderboard = {}
     return leaderboard
 
 # 顯示排行榜
 def show_leaderboard():
-    try:
-        with open(LEADERBOARD_FILE, "r") as f:
-            leaderboard = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        leaderboard = {}
-
-    # 排名排序，依照分數從高到低排列
+    leaderboard = load_leaderboard()
     sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
-
-    # 顯示排行榜畫面
     screen.fill(BG_COLOR)
     font = pygame.font.SysFont(None, 48)
     title_text = font.render("Leaderboard", True, (255, 255, 255))
     screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, 50))
 
     y_offset = 150
-    for rank, (player, score) in enumerate(sorted_leaderboard[:10], start=1):  # 顯示前 10 名
+    for rank, (player, score) in enumerate(sorted_leaderboard[:10], start=1):
         entry_text = font.render(f"{rank}. {player}: {score}", True, (255, 255, 255))
         screen.blit(entry_text, (SCREEN_WIDTH // 2 - entry_text.get_width() // 2, y_offset))
         y_offset += 40
 
     pygame.display.flip()
-    pygame.time.wait(5000)  # 等待 5 秒
+    pygame.time.wait(5000)
 
 # 遊戲結束畫面（新增排行榜顯示）
 def game_over():
-    global game_running, score, player_name  # 聲明全域變數
+    global game_running, score, player_name
 
     # 更新排行榜
     update_leaderboard(player_name, score)
 
-    # 從檔案讀取並更新排行榜數據
-    try:
-        with open(LEADERBOARD_FILE, "r") as f:
-            leaderboard = json.load(f)
-    except FileNotFoundError:
-        leaderboard = {}
-
-    # 排行榜更新（新增或覆蓋玩家的分數）
-    leaderboard[player_name] = max(score, leaderboard.get(player_name, 0))
-
-    # 排行榜排序（按分數降序）
-    sorted_leaderboard = sorted(leaderboard.items(), key=lambda x: x[1], reverse=True)
-
-    # 保存更新後的排行榜到檔案
-    with open(LEADERBOARD_FILE, "w") as f:
-        json.dump(leaderboard, f)
-
-    # 取得更新後的前三名
-    top_players = sorted_leaderboard[:3]
-
     # 顯示遊戲結束畫面
     screen.fill(BG_COLOR)
     font = pygame.font.SysFont(None, 50)
-
-    # 顯示 "GAME OVER"
     game_over_text = font.render("GAME OVER", True, (255, 0, 0))
     screen.blit(game_over_text, (SCREEN_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 6))
-
-    # 顯示分數
     score_text = font.render(f"Your Score: {score}", True, (255, 255, 255))
     screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 4))
 
     # 顯示排行榜
-    leaderboard_title = font.render("Leaderboard", True, (255, 255, 0))
-    screen.blit(leaderboard_title, (SCREEN_WIDTH // 2 - leaderboard_title.get_width() // 2, SCREEN_HEIGHT // 3))
-
-    y_offset = SCREEN_HEIGHT // 3 + 50
-    for idx, (player, score) in enumerate(top_players, start=1):
-        player_score_text = font.render(f"{idx}. {player}: {score}", True, (255, 255, 255))
-        screen.blit(player_score_text, (SCREEN_WIDTH // 2 - player_score_text.get_width() // 2, y_offset))
-        y_offset += 40
-
-    # 提示重新開始或退出
-    restart_text = font.render("Press R to Restart", True, (255, 255, 255))
-    quit_text = font.render("Press Q to Quit", True, (255, 255, 255))
-    screen.blit(restart_text, (SCREEN_WIDTH // 2 - restart_text.get_width() // 2, SCREEN_HEIGHT - 100))
-    screen.blit(quit_text, (SCREEN_WIDTH // 2 - quit_text.get_width() // 2, SCREEN_HEIGHT - 50))
+    show_leaderboard()
 
     pygame.display.flip()
+    pygame.time.wait(3000)  # 等待後退出
+    game_running = False
 
-    # 等待玩家輸入
-    waiting = True
-    while waiting:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_r:  # 重新開始遊戲
-                    reset_game()
-                    game_running = True
-                    waiting = False
-                elif event.key == pygame.K_q:  # 離開遊戲
-                    pygame.quit()
-                    exit()
+# 玩家資料
+player_data = {
+    "level": 1,
+    "experience": 0,
+    "history_score": 0
+}
+def save_game_state():
+    global snake, snake_direction, items, score, player_data
+    game_state = {
+        "snake": snake,
+        "snake_direction": snake_direction,
+        "items": items,
+        "score": score,
+        "player_data": player_data
+    }
+    with open("game_state.json", "w") as f:
+        json.dump(game_state, f)
 
-def get_player_name(player):
-    global player_name
-    player_name = player
-
-
-def main(current_user):
+def handle_key_events(event):
     global game_running, snake_direction, game_paused
 
-    # Display the start screen
-    #show_start_screen()
+    if event.key == pygame.K_k:  # 暫停/繼續遊戲
+        game_paused = not game_paused
 
-    # Initialize game variables
+    elif event.key == pygame.K_f:  # 離開遊戲
+        save_game_state()
+        game_running = False
+
+    elif event.key == pygame.K_r:  # 重新開始遊戲
+        reset_game()
+
+    elif event.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT):
+        # 控制蛇方向的按鍵
+        new_direction = {
+            pygame.K_UP: "UP",
+            pygame.K_DOWN: "DOWN",
+            pygame.K_LEFT: "LEFT",
+            pygame.K_RIGHT: "RIGHT"
+        }.get(event.key)
+
+        # 防止蛇掉頭
+        if (
+            (new_direction == "UP" and snake_direction != "DOWN") or
+            (new_direction == "DOWN" and snake_direction != "UP") or
+            (new_direction == "LEFT" and snake_direction != "RIGHT") or
+            (new_direction == "RIGHT" and snake_direction != "LEFT")
+        ):
+            snake_direction = new_direction
+
+def handle_key_events(event):
+    global game_running, snake_direction, game_paused
+
+    if event.key == pygame.K_k:  # 暫停/繼續遊戲
+        game_paused = not game_paused
+
+    elif event.key == pygame.K_f:  # 離開遊戲
+        handle_quit_game()
+
+    elif event.key == pygame.K_r:  # 重新開始遊戲
+        reset_game()
+
+    elif event.key in (pygame.K_UP, pygame.K_DOWN, pygame.K_LEFT, pygame.K_RIGHT):
+        # 控制蛇方向的按鍵
+        new_direction = {
+            pygame.K_UP: "UP",
+            pygame.K_DOWN: "DOWN",
+            pygame.K_LEFT: "LEFT",
+            pygame.K_RIGHT: "RIGHT"
+        }.get(event.key)
+
+        # 防止蛇掉頭
+        if (
+            (new_direction == "UP" and snake_direction != "DOWN") or
+            (new_direction == "DOWN" and snake_direction != "UP") or
+            (new_direction == "LEFT" and snake_direction != "RIGHT") or
+            (new_direction == "RIGHT" and snake_direction != "LEFT")
+        ):
+            snake_direction = new_direction
+
+def update_leaderboard(current_user, score):
+    leaderboard = load_leaderboard()
+    leaderboard[current_user['username']] = max(score, leaderboard.get(current_user['username'], 0))
+    with open(LEADERBOARD_FILE, "w") as f:
+        json.dump(leaderboard, f, indent=4)
+
+
+def handle_quit_game(current_user, score):
+    save_game_state()  # 儲存遊戲進度
+    update_leaderboard(current_user, score)  # 更新排行榜
+    pygame.quit()
+    sys.exit()
+
+def run_snake_game(current_user):
+    global game_running
+    score = 0  # 遊戲內部的分數
+    player_name = current_user['username']  # 直接從參數獲取玩家名稱
+    
+    # 顯示開始畫面
+    show_start_screen()
+
+    # 初始化遊戲變數
     reset_game()
-
     clock = pygame.time.Clock()
     game_running = True
 
+    # 遊戲主迴圈
     while game_running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                exit()
+                handle_quit_game()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP and snake_direction != "DOWN":
-                    snake_direction = "UP"
-                elif event.key == pygame.K_DOWN and snake_direction != "UP":
-                    snake_direction = "DOWN"
-                elif event.key == pygame.K_LEFT and snake_direction != "RIGHT":
-                    snake_direction = "LEFT"
-                elif event.key == pygame.K_RIGHT and snake_direction != "LEFT":
-                    snake_direction = "RIGHT"
-                elif event.key == pygame.K_p:  # Pause/unpause game
-                    game_paused = not game_paused
+                handle_key_events(event)
 
         if not game_paused:
             update_snake()
             draw_game_state()
 
-        # Cap the frame rate
         clock.tick(FPS)
-    current_user['score'] = current_user['score'] + score
-    # Update leaderboard and display it at the end
-    update_leaderboard(player_name, score)
-    show_leaderboard()
+
+    # 更新排行榜並返回得分
+    update_leaderboard(current_user, score)
+    return score
+
 
