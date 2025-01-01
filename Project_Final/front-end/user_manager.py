@@ -36,31 +36,8 @@ def register(username, password, security_question, security_answer):
         "security_question": security_question,
         "security_answer": security_answer,
         "level": 1,
-        "score": 0
+        "score": 0,
+        "total_score":0,
     })
     save_users(users)
     return True
-
-# # 加密
-
-# import hashlib
-
-# def hash_password(password):
-#     return hashlib.sha256(password.encode()).hexdigest()
-
-# def login(username, password):
-#     hashed_password = hash_password(password)
-#     users = load_users()
-#     for user in users["users"]:
-#         if user["username"] == username and user["password"] == hashed_password:
-#             return True
-#     return False
-
-# def register(username, password):
-#     hashed_password = hash_password(password)
-#     users = load_users()
-#     if any(user["username"] == username for user in users["users"]):
-#         return False  # 帳號已存在
-#     users["users"].append({"username": username, "password": hashed_password, "level": 1, "score": 0})
-#     save_users(users)
-#     return True
