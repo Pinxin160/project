@@ -132,6 +132,9 @@ class DiceGame:
 
     def create_ui(self):
         # 選擇電腦強度
+        self.difficulty_frame = tk.Frame(self.root)  # 用來容納難度選擇畫面
+        self.difficulty_frame.pack(fill=tk.BOTH, expand=True)
+        
         self.difficulty_label = tk.Label(self.root, text="選擇電腦強度：", font=("Helvetica", 14))
         self.difficulty_label.pack(pady=5)
 
@@ -159,6 +162,8 @@ class DiceGame:
             messagebox.showerror("錯誤", "請先選擇遊戲難度！")
             return
         
+        # 隱藏難度選擇
+        self.difficulty_frame.pack_forget()
         # 重置遊戲狀態
         self.player = Player(self.user_account_id)
         self.computer = Player("電腦")
@@ -578,6 +583,7 @@ class DiceGame:
             if hasattr(self, "pause_window"):
                 self.pause_window.destroy()
             self.root.focus_force()  # 將焦點返回主視窗
+
             
             
     def quit_game(self, event=None):
@@ -586,20 +592,51 @@ class DiceGame:
       #      self.user_account['score'] += self.score
             self.root.destroy()
             self.root.quit()
-        
+
+
+
 # =============================================================================
-#     def quit_game(self, event=None):
-#         if messagebox.askyesno("確認退出", "確定要退出遊戲嗎？"):
-#             self.root.destroy()
-#             self.root.quit()
-# 
+#     def restart_game(self):
+#         """重啟遊戲，回到選擇難度畫面"""
+#         if messagebox.askyesno("確認重啟", "確定要重啟遊戲嗎？"):
+#             # 銷毀遊戲畫面
+#             self.game_frame.destroy()
+#     
+#             # 顯示難度選擇畫面
+#             self.difficulty_frame.pack(fill=tk.BOTH, expand=True)
 # =============================================================================
+
+# =============================================================================
+#     def restart_game(self, event=None):
+#         """重啟遊戲，回到選擇難度畫面"""
+#         if messagebox.askyesno("確認重啟", "確定要重啟遊戲嗎？"):
+#             # 銷毀遊戲畫面
+#             self.game_frame.destroy()
+#     
+#             # 顯示難度選擇畫面
+#             self.difficulty_frame.pack(fill=tk.BOTH, expand=True)
+# =============================================================================
+
+            
     def restart_game(self, event=None):
+        """重啟遊戲，回到選擇難度畫面"""
         if messagebox.askyesno("確認重啟", "確定要重啟遊戲嗎？"):
-            self.root.destroy()
-            root = tk.Tk()
-            game = DiceGame(root,self.user_account)
-            root.mainloop()
+            # 清除遊戲畫面的所有元件
+            for widget in self.root.winfo_children():
+                widget.destroy()
+    
+            # 重置遊戲狀態
+            self.difficulty = None  # 清空難度選擇
+            self.player = None
+            self.computer = None
+            self.previous_call = None
+            self.current_turn = "player"
+            self.computer_losses = 0
+    
+            # 回到難度選擇畫面
+            self.create_ui()
+
+
     def get_exp(self):
         print(f"[DEBUG] 獲取玩家經驗值：{self.player.experience}")  # 調試輸出
         return self.player.experience
