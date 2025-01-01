@@ -526,7 +526,7 @@ def game_screen(current_user):
         # 創建排行榜視窗
         leaderboard_window = tk.Toplevel(main_window)
         leaderboard_window.title("排行榜")
-        leaderboard_window.geometry("400x400")
+        leaderboard_window.geometry("400x550")
         leaderboard_window.configure(bg="#f5f5f5")  # 設置背景顏色
 
         # 標題區域
