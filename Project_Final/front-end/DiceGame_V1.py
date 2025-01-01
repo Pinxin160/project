@@ -380,8 +380,8 @@ class DiceGame:
                         self.check_game_over()
                         return
                     self.player.add_experience(200)  # 增加經驗值
-                    self.user_account['score'] += 200  # 累計分數
-                    self.user_account['score'] += self.score
+                  #  self.user_account['score'] += 200  # 累計分數
+                  #  self.user_account['score'] += self.score
         else:
             if self.current_turn == "player":
                 messagebox.showinfo("結果", "玩家抓對了！")
@@ -393,8 +393,8 @@ class DiceGame:
                         self.check_game_over()
                         return
                     self.player.add_experience(200)  # 增加經驗值
-                    self.user_account['score'] += 200  # 累計分數
-                    self.user_account['score'] += self.score
+                  #  self.user_account['score'] += 200  # 累計分數
+                  #  self.user_account['score'] += self.score
             else:
                 messagebox.showinfo("結果", "電腦抓對了！")
                 self.player.lose_dice()
@@ -500,6 +500,7 @@ class DiceGame:
             # 玩家贏了，增加分數
             self.game_over = True  # 設定遊戲結束
             messagebox.showinfo("遊戲結束", "你贏了！🎉🎉🎉")
+            self.user_account['score'] += self.player.experience
             self.user_account['score'] += 800  # 勝利獲得 800 分
             self.user_account['score'] += self.score  # 累計遊戲內計分
             self.root.quit()  # 結束遊戲主迴圈
