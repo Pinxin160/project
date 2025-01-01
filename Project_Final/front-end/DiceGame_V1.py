@@ -495,12 +495,14 @@ class DiceGame:
         self.check_game_over()
 
     def check_game_over(self):
+        """檢查遊戲是否結束，並根據結果進行處理"""
         if not self.player.dice:
             # 玩家輸了，恢復原始分數
             self.game_over = True  # 設定遊戲結束
             messagebox.showinfo("遊戲結束", "你輸了！🪦🪦🪦")
             self.user_account['score'] = self.original_score  # 恢復分數至初始值
-            self.root.quit()  # 結束遊戲主迴圈
+            self.root.destroy()
+            self.root.quit()
         elif not self.computer.dice:
             # 玩家贏了，增加分數
             self.game_over = True  # 設定遊戲結束
@@ -508,7 +510,11 @@ class DiceGame:
             self.user_account['score'] += self.player.experience
             self.user_account['score'] += 800  # 勝利獲得 800 分
             self.user_account['score'] += self.score  # 累計遊戲內計分
-            self.root.quit()  # 結束遊戲主迴圈
+    
+            self.root.destroy()
+            self.root.quit()
+
+
 
 
 # =============================================================================
