@@ -402,10 +402,11 @@ def game_screen(current_user):
                 x = score - a
             elif game_name == "貪食蛇":
                 user_account = current_user['username']
+                a = current_user['score']
                 snake_kfr_points_2.get_player_name(user_account)  # 設置玩家名稱
                 snake_kfr_points_2.main(current_user)            # 僅在此處執行遊戲
                 score = current_user["score"]
-                x = score  # 根據遊戲規則計算增量
+                x = score - a  # 根據遊戲規則計算增量
                 
             print("enter update")
             update_score(score,game_name,x)
@@ -414,18 +415,26 @@ def game_screen(current_user):
             add_notification(f"突然不想玩{game_name}了")
 
     def update_score(score, game_name,x):
-        #print()
         #current_user['score'] += score
-        print("enter before if")
         
+        global required_experience # 確保可以修改全域變數
+
+        # 更新總分數（不會因升級扣分）
+        current_user["total_score"] += x
+
+        print("enter before if")
         if current_user['score'] >= 2**(current_user['level'] - 1) * 1000:
             current_user['score'] = current_user['score'] - 2**(current_user['level'] - 1) * 1000
             current_user['level'] += 1
         print("current_user",current_user['score'] )
         print("level",current_user['level'])
         required_experience = 2**(current_user['level'] - 1) * 1000  # 公式: 2^(L-1) * 1000
+
+        # 更新分數條
+        score_bar['maximum'] = required_experience
+        score_bar['value'] = current_user['score']
         # 更新玩家資訊顯示
-        player_info_label_text = f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}"
+        player_info_label_text = f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  總分: {current_user['total_score']}  |  升級所需經驗: {required_experience}"
         player_info_label.config(text=player_info_label_text)
         upgrade_progress_label_text = f"升級進度: {current_user['score']} / {required_experience}"
         upgrade_progress_label.config(text=upgrade_progress_label_text)
@@ -436,6 +445,7 @@ def game_screen(current_user):
                 if user["username"] == current_user["username"]:
                     user["score"] = current_user['score']
                     user["level"] = current_user['level']
+                    user["total_score"] = current_user["total_score"]  # 更新總分數
                     break
         save_users(users)
         score_bar['value'] = current_user['score']
@@ -511,12 +521,6 @@ def game_screen(current_user):
         notification_list.insert(tk.END, message)
         notification_list.see(tk.END)  # 滾動至最新通知
 
-    # 更新分數條
-    def update_score_bar(new_score):
-        current_user['score'] = new_score
-        score_bar['value'] = new_score
-        score_label.config(text=f"分數: {new_score}")
-
     # 打開排行榜視窗
     def show_leaderboard():
         # 創建排行榜視窗
@@ -547,7 +551,7 @@ def game_screen(current_user):
         users = user_data["users"]
 
         # 根據分數排序，只取前 10 名
-        sorted_users = sorted(users, key=lambda user: user["score"], reverse=True)[:10]
+        sorted_users = sorted(users, key=lambda user: user["total_score"], reverse=True)[:10]
 
         # 顯示排序後的玩家名稱和分數
         for idx, player in enumerate(sorted_users):
@@ -565,7 +569,7 @@ def game_screen(current_user):
 
             tk.Label(
                 player_frame,
-                text=f"分數: {player['score']}",
+                text=f"分數: {player['total_score']}",
                 font=("Arial", 12),
                 anchor="e",
                 bg=rank_color
@@ -613,7 +617,7 @@ def game_screen(current_user):
 
 
     # 顯示玩家資訊（包含等級和所需經驗）
-    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  分數: {current_user['score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f0f8ff", anchor="w")
+    player_info_label = tk.Label(player_info_frame, text=f"玩家名稱: {current_user['username']}  |  等級: {current_user['level']}  |  總分: {current_user['total_score']}  |  升級所需經驗: {required_experience}",font=("Arial", 14), bg="#f0f8ff", anchor="w")
     player_info_label.grid(row=0, column=0, columnspan=3, padx=10, pady=10)
 
     # 顯示分數進度
