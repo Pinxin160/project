@@ -402,10 +402,12 @@ def game_screen(current_user):
                 x = score - a
             elif game_name == "貪食蛇":
                 user_account = current_user['username']
+                a = current_user['score']
                 snake_kfr_points.get_player_name(user_account)  # 設置玩家名稱
                 snake_kfr_points.main(current_user)            # 僅在此處執行遊戲
                 score = current_user["score"]
-                x = score  # 根據遊戲規則計算增量
+                x = score-a  # 根據遊戲規則計算增量
+            
                 
             print("enter update")
             update_score(score,game_name,x)
