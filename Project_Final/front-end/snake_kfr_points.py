@@ -409,9 +409,7 @@ def main(current_user):
     else:
         print("Error: current_user is not a dictionary or missing 'score' key.")
 
-    # 結束遊戲後關閉 Pygame 視窗
-    pygame.quit()
-    sys.exit()
+
 
 if __name__ == "__main__":
     main()
