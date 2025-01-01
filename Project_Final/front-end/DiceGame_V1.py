@@ -76,7 +76,7 @@ class DiceGame:
         count_frame = tk.LabelFrame(keypad_window, text="\u6578\u91cf", font=("Helvetica", 14))
         count_frame.pack(pady=10, fill=tk.X, padx=10)
 
-        for i in range(1, 10):  # 假設數量最多為 9
+        for i in range(1, 11):  # 假設數量最多為 9
             btn = tk.Button(count_frame, text=str(i), font=("Helvetica", 18),
                             command=lambda n=i: [selected_count.set(n), update_display()])
             btn.pack(side=tk.LEFT, padx=5, pady=5)
@@ -106,11 +106,12 @@ class DiceGame:
         # 遊戲狀態
         self.game_paused = False
         self.difficulty = None  # 預設電腦強度
-        self.computer_loss_multiplier = 2  # 普通難度需打敗2次才減1顆骰子
+        self.computer_loss_multiplier = 1  # 普通難度需打敗2次才減1顆骰子
 
         # 初始化玩家
         self.user_account = user_account
         self.user_account_id = user_account['username']
+        self.original_score = user_account['score']  # 記錄玩家登入時的分數
         self.user_account_score = user_account['score']
         self.player = Player(self.user_account_id)
         self.computer = Player("電腦")
@@ -352,9 +353,6 @@ class DiceGame:
         # 假設這個方法能從遊戲狀態中取出所有骰子的結果，包括玩家和電腦的
         return self.computer.dice + self.player.dice  # 假設有player屬性
 
-
-    
-
     def challenge(self):
         if not self.previous_call:
             messagebox.showerror("錯誤", "你還沒報數抓什麼抓🙄！")
@@ -367,7 +365,7 @@ class DiceGame:
         result_text = f"場上骰子攤牌：\n玩家骰子：{self.player.dice}\n電腦骰子：{self.computer.dice}"
         result_text += f"\n場上共有 {actual_count} 顆 {value}（含萬能數字 1）。"
         messagebox.showinfo("攤牌結果", result_text)
-        
+    
         if actual_count >= count:
             if self.current_turn == "player":
                 messagebox.showinfo("結果", "玩家抓錯了！")
@@ -378,8 +376,10 @@ class DiceGame:
                 if self.computer_losses >= self.computer_loss_multiplier:
                     self.computer.lose_dice()
                     self.computer_losses = 0
+                    if not self.player.dice:  # 檢查玩家是否還有骰子
+                        self.check_game_over()
+                        return
                     self.player.add_experience(200)  # 增加經驗值
-               #     self.score += 200
                     self.user_account['score'] += 200  # 累計分數
                     self.user_account['score'] += self.score
         else:
@@ -389,12 +389,60 @@ class DiceGame:
                 if self.computer_losses >= self.computer_loss_multiplier:
                     self.computer.lose_dice()
                     self.computer_losses = 0
+                    if not self.computer.dice:  # 檢查電腦是否還有骰子
+                        self.check_game_over()
+                        return
                     self.player.add_experience(200)  # 增加經驗值
                     self.user_account['score'] += 200  # 累計分數
                     self.user_account['score'] += self.score
             else:
                 messagebox.showinfo("結果", "電腦抓對了！")
                 self.player.lose_dice()
+
+# =============================================================================
+#     
+# 
+#     def challenge(self):
+#         if not self.previous_call:
+#             messagebox.showerror("錯誤", "你還沒報數抓什麼抓🙄！")
+#             return
+#     
+#         count, value = self.previous_call
+#         actual_count = sum(1 for p in self.all_players for d in p.dice if d == value or d == 1)
+#     
+#         # 攤牌顯示
+#         result_text = f"場上骰子攤牌：\n玩家骰子：{self.player.dice}\n電腦骰子：{self.computer.dice}"
+#         result_text += f"\n場上共有 {actual_count} 顆 {value}（含萬能數字 1）。"
+#         messagebox.showinfo("攤牌結果", result_text)
+#         
+#         if actual_count >= count:
+#             if self.current_turn == "player":
+#                 messagebox.showinfo("結果", "玩家抓錯了！")
+#                 self.player.lose_dice()
+#             else:
+#                 messagebox.showinfo("結果", "電腦抓錯了！")
+#                 self.computer_losses += 1
+#                 if self.computer_losses >= self.computer_loss_multiplier:
+#                     self.computer.lose_dice()
+#                     self.computer_losses = 0
+#                     self.player.add_experience(200)  # 增加經驗值
+#                #     self.score += 200
+#                     self.user_account['score'] += 200  # 累計分數
+#                     self.user_account['score'] += self.score
+#         else:
+#             if self.current_turn == "player":
+#                 messagebox.showinfo("結果", "玩家抓對了！")
+#                 self.computer_losses += 1
+#                 if self.computer_losses >= self.computer_loss_multiplier:
+#                     self.computer.lose_dice()
+#                     self.computer_losses = 0
+#                     self.player.add_experience(200)  # 增加經驗值
+#                     self.user_account['score'] += 200  # 累計分數
+#                     self.user_account['score'] += self.score
+#             else:
+#                 messagebox.showinfo("結果", "電腦抓對了！")
+#                 self.player.lose_dice()
+# =============================================================================
 
 
 # =============================================================================
@@ -440,18 +488,37 @@ class DiceGame:
         
         self.update_ui()
         self.check_game_over()
-    
+
     def check_game_over(self):
         if not self.player.dice:
+            # 玩家輸了，恢復原始分數
+            self.game_over = True  # 設定遊戲結束
             messagebox.showinfo("遊戲結束", "你輸了！🪦🪦🪦")
-            self.user_account['score'] += self.score  # 累計分數
+            self.user_account['score'] = self.original_score  # 恢復分數至初始值
             self.root.quit()  # 結束遊戲主迴圈
         elif not self.computer.dice:
+            # 玩家贏了，增加分數
+            self.game_over = True  # 設定遊戲結束
             messagebox.showinfo("遊戲結束", "你贏了！🎉🎉🎉")
-            self.user_account['score'] += 800  # 累計分數
-       #     self.score += 800
-            self.user_account['score'] += self.score  # 累計分數
-            #self.root.quit()  # 結束遊戲主迴圈
+            self.user_account['score'] += 800  # 勝利獲得 800 分
+            self.user_account['score'] += self.score  # 累計遊戲內計分
+            self.root.quit()  # 結束遊戲主迴圈
+
+
+# =============================================================================
+#     def check_game_over(self):
+#         if not self.player.dice:
+#             messagebox.showinfo("遊戲結束", "你輸了！🪦🪦🪦")
+#             self.score == 0
+#             self.user_account['score'] == self.original_score  # 將分數還原為初始分數
+#             self.root.quit()  # 結束遊戲主迴圈
+#         elif not self.computer.dice:
+#             messagebox.showinfo("遊戲結束", "你贏了！🎉🎉🎉")
+#             self.user_account['score'] += 800  # 累計分數
+#        #     self.score += 800
+#             self.user_account['score'] += self.score  # 累計分數
+#             self.root.quit()  # 結束遊戲主迴圈
+# =============================================================================
             
 # =============================================================================
 #     def check_game_over(self):
@@ -515,7 +582,7 @@ class DiceGame:
     def quit_game(self, event=None):
         if messagebox.askyesno("確認退出", "確定要退出遊戲嗎？"):
             # 確保分數在退出時已經累積完成
-            self.user_account['score'] += self.score
+      #      self.user_account['score'] += self.score
             self.root.destroy()
             self.root.quit()
         
