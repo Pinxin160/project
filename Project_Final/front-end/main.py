@@ -353,7 +353,7 @@ def stop_music():
     pygame.mixer.music.stop()
 
 
-import chess_game_encrypted_2p, DiceGame_V1, os,snake_kfr_points #, 貪食蛇_加入排行榜
+import chess_game_encrypted_2p, DiceGame_V1, os,snake_kfr_points_2 #, 貪食蛇_加入排行榜
 import os #, 貪食蛇_加入排行榜
 
 def game_screen(current_user):
@@ -402,8 +402,8 @@ def game_screen(current_user):
                 x = score - a
             elif game_name == "貪食蛇":
                 user_account = current_user['username']
-                snake_kfr_points.get_player_name(user_account)  # 設置玩家名稱
-                snake_kfr_points.main(current_user)            # 僅在此處執行遊戲
+                snake_kfr_points_2.get_player_name(user_account)  # 設置玩家名稱
+                snake_kfr_points_2.main(current_user)            # 僅在此處執行遊戲
                 score = current_user["score"]
                 x = score  # 根據遊戲規則計算增量
                 
