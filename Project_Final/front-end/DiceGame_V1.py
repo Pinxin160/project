@@ -387,10 +387,11 @@ class DiceGame:
                 if self.computer_losses >= self.computer_loss_multiplier:
                     self.computer.lose_dice()
                     self.computer_losses = 0
+                    self.player.add_experience(200)  # 增加經驗值
                     if not self.computer.dice:  # 電腦骰子用完
                         self.check_game_over()
                         return
-                    self.player.add_experience(200)  # 增加經驗值
+                    
         else:  # 抓對的情況
             if self.current_turn == "player":
                 messagebox.showinfo("結果", "玩家抓對了！")
@@ -398,10 +399,11 @@ class DiceGame:
                 if self.computer_losses >= self.computer_loss_multiplier:
                     self.computer.lose_dice()
                     self.computer_losses = 0
+                    self.player.add_experience(200)  # 增加經驗值
                     if not self.computer.dice:  # 電腦骰子用完
                         self.check_game_over()
                         return
-                    self.player.add_experience(200)  # 增加經驗值
+                    
             else:
                 messagebox.showinfo("結果", "電腦抓對了！")
                 self.player.lose_dice()
