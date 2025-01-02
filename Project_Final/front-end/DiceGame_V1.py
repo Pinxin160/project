@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 import random
+import json
+import os
 
 # 定義數字與符號的對應字典
 DICE_SYMBOLS = {
@@ -32,6 +34,20 @@ class Player:
 
 # 遊戲主類別
 class DiceGame:
+    def ask_to_resume_game(self):
+        save_dir = "dicegame"
+        save_path = os.path.join(save_dir, f"{self.user_account_id}_save.json")
+    
+        if os.path.exists(save_path):
+            # 彈出對話框詢問是否恢復
+            answer = messagebox.askyesno("恢復進度", "是否恢復上次的遊戲進度？")
+            if answer:
+                self.load_game_progress()  # 恢復進度
+            else:
+                self.start_new_game()  # 如果選擇不恢復進度，開始一個新遊戲
+        else:
+            self.start_new_game()  # 如果沒有進度檔案則開始新遊戲
+    
     def show_number_pad(self):
         """顯示數字鍵盤讓玩家輸入報數"""
         # 建立彈窗
@@ -98,16 +114,15 @@ class DiceGame:
         tk.Button(control_frame, text="\u78ba\u5b9a", font=("Helvetica", 14), bg="blueviolet", fg="white", command=confirm_selection).pack(side=tk.LEFT, padx=10)
         tk.Button(control_frame, text="\u53d6\u6d88", font=("Helvetica", 14), bg="white", fg="blueviolet", command=keypad_window.destroy).pack(side=tk.LEFT, padx=10)
 
-
     def __init__(self, root, user_account):
         self.root = root
         self.root.title("🌬️🐮遊戲")
-
+    
         # 遊戲狀態
         self.game_paused = False
         self.difficulty = None  # 預設電腦強度
         self.computer_loss_multiplier = 1  # 普通難度需打敗2次才減1顆骰子
-
+    
         # 初始化玩家
         self.user_account = user_account
         self.user_account_id = user_account['username']
@@ -116,14 +131,19 @@ class DiceGame:
         self.player = Player(self.user_account_id)
         self.computer = Player("電腦")
         self.all_players = [self.player, self.computer]
-        
+    
         # 初始化遊戲狀態
         self.previous_call = None
         self.current_turn = "player"
         self.computer_losses = 0
         self.score = 0
-        # 建立 UI
-        self.create_ui()
+    
+        # 詢問是否恢復遊戲進度
+        self.ask_to_resume_game()
+
+        # 創建 UI（只有在沒有選擇難度的情況下才創建）
+        if self.difficulty is None:  # 只有在尚未選擇難度時才顯示
+            self.create_ui()
 
         # 綁定快捷鍵事件
         self.root.bind("<k>", self.toggle_pause)
@@ -131,33 +151,114 @@ class DiceGame:
         self.root.bind("<r>", self.restart_game)
 
     def create_ui(self):
+        # 如果已經有選擇過難度，不顯示難度選擇畫面
+        if self.difficulty is not None:  # 如果難度已設置
+            return  # 如果已選擇過難度，就不顯示這些UI元素
+
         # 選擇電腦強度
         self.difficulty_frame = tk.Frame(self.root)  # 用來容納難度選擇畫面
         self.difficulty_frame.pack(fill=tk.BOTH, expand=True)
-        
+
         self.difficulty_label = tk.Label(self.root, text="選擇電腦強度：", font=("Helvetica", 14))
         self.difficulty_label.pack(pady=5)
 
         self.difficulty_frame = tk.Frame(self.root)
         self.difficulty_frame.pack()
 
-        tk.Button(self.difficulty_frame, text="🤷🏻‍👉", font=("Helvetica", 20), command=lambda: self.set_difficulty("easy"), width=10, bg="whitesmoke", fg="black").pack(side=tk.LEFT, padx=5)
-        tk.Button(self.difficulty_frame, text="😈🪦", font=("Helvetica", 20), command=lambda: self.set_difficulty("hard"), width=10, bg="indigo", fg="white").pack(side=tk.LEFT, padx=5)
+        tk.Button(self.difficulty_frame, text="🤷🏻‍👉", font=("Helvetica", 20),
+                  command=lambda: self.set_difficulty("easy"), width=10,
+                  bg="whitesmoke", fg="black").pack(side=tk.LEFT, padx=5)
+        tk.Button(self.difficulty_frame, text="😈🪦", font=("Helvetica", 20),
+                  command=lambda: self.set_difficulty("hard"), width=10,
+                  bg="indigo", fg="white").pack(side=tk.LEFT, padx=5)
 
         # 開始遊戲按鈕
-        self.start_button = tk.Button(self.root, text="開始遊戲", font=("Helvetica", 14), command=self.start_game, bg="gold", fg="red")
+        self.start_button = tk.Button(self.root, text="開始遊戲", font=("Helvetica", 14),
+                                       command=self.start_game, bg="gold", fg="red")
         self.start_button.pack(pady=20)
 
-    def set_difficulty(self, difficulty):
-        self.difficulty = difficulty
-        if difficulty == "easy":
-            self.computer_loss_multiplier = 1
-            messagebox.showinfo("難度選擇", "簡單模式已選擇！")
-        elif difficulty == "hard":
-            self.computer_loss_multiplier = 3
-            messagebox.showinfo("難度選擇", "困難模式已選擇！")
 
-    def start_game(self):
+    def create_ui(self):
+        """創建難度選擇 UI"""
+        if self.difficulty is not None:  # 如果已經選擇過難度，不再顯示
+            return
+
+        # 選擇電腦強度
+        self.difficulty_frame = tk.Frame(self.root)  # 用來容納難度選擇畫面
+        self.difficulty_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.difficulty_label = tk.Label(self.root, text="選擇電腦強度：", font=("Helvetica", 14))
+        self.difficulty_label.pack(pady=5)
+
+        self.difficulty_frame = tk.Frame(self.root)
+        self.difficulty_frame.pack()
+
+        tk.Button(self.difficulty_frame, text="🤷🏻‍👉", font=("Helvetica", 20),
+                  command=lambda: self.set_difficulty("easy"), width=10,
+                  bg="whitesmoke", fg="black").pack(side=tk.LEFT, padx=5)
+        tk.Button(self.difficulty_frame, text="😈🪦", font=("Helvetica", 20),
+                  command=lambda: self.set_difficulty("hard"), width=10,
+                  bg="indigo", fg="white").pack(side=tk.LEFT, padx=5)
+
+        # 開始遊戲按鈕
+        self.start_button = tk.Button(self.root, text="開始遊戲", font=("Helvetica", 14),
+                                       command=self.start_game, bg="gold", fg="red")
+        self.start_button.pack(pady=20)
+
+
+
+
+# =============================================================================
+#     def __init__(self, root, user_account):
+#         self.root = root
+#         self.root.title("🌬️🐮遊戲")
+# 
+#         # 遊戲狀態
+#         self.game_paused = False
+#         self.difficulty = None  # 預設電腦強度
+#         self.computer_loss_multiplier = 1  # 普通難度需打敗2次才減1顆骰子
+# 
+#         # 初始化玩家
+#         self.user_account = user_account
+#         self.user_account_id = user_account['username']
+#         self.original_score = user_account['score']  # 記錄玩家登入時的分數
+#         self.user_account_score = user_account['score']
+#         self.player = Player(self.user_account_id)
+#         self.computer = Player("電腦")
+#         self.all_players = [self.player, self.computer]
+#         
+#         # 初始化遊戲狀態
+#         self.previous_call = None
+#         self.current_turn = "player"
+#         self.computer_losses = 0
+#         self.score = 0
+#         # 建立 UI
+#         self.create_ui()
+# 
+#         # 綁定快捷鍵事件
+#         self.root.bind("<k>", self.toggle_pause)
+#         self.root.bind("<f>", self.quit_game)
+#         self.root.bind("<r>", self.restart_game)
+# 
+#     def create_ui(self):
+#         # 選擇電腦強度
+#         self.difficulty_frame = tk.Frame(self.root)  # 用來容納難度選擇畫面
+#         self.difficulty_frame.pack(fill=tk.BOTH, expand=True)
+#         
+#         self.difficulty_label = tk.Label(self.root, text="選擇電腦強度：", font=("Helvetica", 14))
+#         self.difficulty_label.pack(pady=5)
+# 
+#         self.difficulty_frame = tk.Frame(self.root)
+#         self.difficulty_frame.pack()
+# 
+#         tk.Button(self.difficulty_frame, text="🤷🏻‍👉", font=("Helvetica", 20), command=lambda: self.set_difficulty("easy"), width=10, bg="whitesmoke", fg="black").pack(side=tk.LEFT, padx=5)
+#         tk.Button(self.difficulty_frame, text="😈🪦", font=("Helvetica", 20), command=lambda: self.set_difficulty("hard"), width=10, bg="indigo", fg="white").pack(side=tk.LEFT, padx=5)
+# 
+#         # 開始遊戲按鈕
+#         self.start_button = tk.Button(self.root, text="開始遊戲", font=("Helvetica", 14), command=self.start_game, bg="gold", fg="red")
+#         self.start_button.pack(pady=20)
+# =============================================================================
+    def start_new_game(self):
         if not self.difficulty:  # 檢查是否已選擇難度
             messagebox.showerror("錯誤", "請先選擇遊戲難度！")
             return
@@ -179,6 +280,49 @@ class DiceGame:
 
         # 創建遊戲 UI
         self.create_game_ui()
+
+
+
+    def set_difficulty(self, difficulty):
+        self.difficulty = difficulty
+        if difficulty == "easy":
+            self.computer_loss_multiplier = 1
+            messagebox.showinfo("難度選擇", "簡單模式已選擇！")
+        elif difficulty == "hard":
+            self.computer_loss_multiplier = 3
+            messagebox.showinfo("難度選擇", "困難模式已選擇！")
+
+    def start_game(self, skip_difficulty_check=False):
+        if not skip_difficulty_check and not self.difficulty:  # 檢查是否已選擇難度
+            messagebox.showerror("錯誤", "請先選擇遊戲難度！")
+            return
+    
+        # 隱藏與遊戲前相關的 UI 元素
+        if hasattr(self, "difficulty_frame") and self.difficulty_frame:
+            self.difficulty_frame.pack_forget()
+    
+        if hasattr(self, "difficulty_label") and self.difficulty_label:
+            self.difficulty_label.pack_forget()
+    
+        if hasattr(self, "start_button") and self.start_button:
+            self.start_button.pack_forget()
+    
+        if hasattr(self, "resume_button") and self.resume_button:
+            self.resume_button.pack_forget()
+    
+        # 初始化遊戲狀態
+        if not skip_difficulty_check:
+            self.player = Player(self.user_account_id)
+            self.computer = Player("電腦")
+            self.all_players = [self.player, self.computer]
+            self.previous_call = None
+            self.current_turn = "player"
+            self.computer_losses = 0
+    
+        # 創建遊戲畫面
+        self.create_game_ui()
+
+
 
     # 修改 create_game_ui 方法
     def create_game_ui(self):
@@ -297,7 +441,7 @@ class DiceGame:
         wildcard_count = dice_counts[1]  # 萬能骰子
         
         # 記錄過去的骰子頻率，用來估算未來的點數分布
-        past_dice_rolls = self.get_past_dice_rolls()  # 假設有一個方法記錄所有過去的骰子結果
+        past_dice_rolls = self.get_past_dice_rolls()  
         past_counts = {i: past_dice_rolls.count(i) for i in range(1, 7)}
         
         # 根據過去的頻率來調整對玩家的估算
@@ -355,7 +499,7 @@ class DiceGame:
     
     def get_past_dice_rolls(self):
         """返回過去所有骰子的點數"""
-        # 假設這個方法能從遊戲狀態中取出所有骰子的結果，包括玩家和電腦的
+
         return self.computer.dice + self.player.dice  # 假設有player屬性
 
     def challenge(self):
@@ -651,6 +795,7 @@ class DiceGame:
     def quit_game(self, event=None):
         if messagebox.askyesno("確認退出", "確定要退出遊戲嗎？"):
             # 確保分數在退出時已經累積完成
+            self.save_game_progress()
       #      self.user_account['score'] += self.score
             self.root.destroy()
             self.root.quit()
@@ -702,6 +847,72 @@ class DiceGame:
     def get_exp(self):
         print(f"[DEBUG] 獲取玩家經驗值：{self.player.experience}")  # 調試輸出
         return self.player.experience
+    
+    
+    def save_game_progress(self):
+        """保存遊戲進度，包括分數、經驗值等"""
+        save_dir = "dicegame"
+        save_path = os.path.join(save_dir, f"{self.user_account_id}_save.json")
+        
+        game_state = {
+            "score": self.user_account['score'],  # 儲存最終分數
+            "current_turn": self.current_turn,
+            "computer_losses": self.computer_losses,
+            "difficulty": self.difficulty,
+            "user_account": self.user_account,
+            "player_dice": self.player.dice,
+            "computer_dice": self.computer.dice,
+            "experience": self.player.experience  # 儲存玩家經驗值
+        }
+        with open(save_path, "w", encoding="utf-8") as save_file:
+            json.dump(game_state, save_file)
+
+    def load_game_progress(self):
+        """從檔案中讀取遊戲進度"""
+        save_dir = "dicegame"
+        save_path = os.path.join(save_dir, f"{self.user_account_id}_save.json")
+    
+        if not os.path.exists(save_path):
+            messagebox.showerror("錯誤", "找不到保存的遊戲進度！")
+            return
+    
+        with open(save_path, "r", encoding="utf-8") as save_file:
+            game_state = json.load(save_file)
+    
+        # 恢復遊戲狀態
+        self.score = game_state["score"]
+        self.current_turn = game_state["current_turn"]
+        self.computer_losses = game_state["computer_losses"]
+        self.difficulty = game_state["difficulty"]
+        self.user_account = game_state["user_account"]
+    
+        # 恢復玩家和電腦的骰子
+        self.player = Player(self.user_account["id"])
+        self.computer = Player("電腦")
+        self.player.dice = game_state["player_dice"]
+        self.computer.dice = game_state["computer_dice"]
+    
+        # 恢復玩家經驗值
+        self.player.experience = game_state.get("experience", 0)  # 若沒有經驗值則設為 0
+    
+        # 移除不需要的 UI 元素（確保沒有難度選擇畫面）
+        if hasattr(self, "difficulty_frame"):
+            self.difficulty_frame.pack_forget()
+    
+        if hasattr(self, "difficulty_label"):
+            self.difficulty_label.pack_forget()
+    
+        if hasattr(self, "start_button"):
+            self.start_button.pack_forget()
+    
+        if hasattr(self, "resume_button"):
+            self.resume_button.pack_forget()
+    
+        # 創建遊戲畫面
+        self.create_game_ui()
+        messagebox.showinfo("恢復成功", "遊戲進度已成功恢復！")
+
+
 
 def run(user_account):
     root = tk.Tk()
