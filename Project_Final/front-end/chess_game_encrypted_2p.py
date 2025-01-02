@@ -59,6 +59,7 @@ class ChessGame:
 
     def pause_game(self):
         print("Pause game triggered")  # 調試輸出
+        self.canvas.unbind("<Button-1>")
         pause_window = tk.Toplevel(self.game_window)
         pause_window.title("暫停遊戲")
         pause_window.geometry("300x150")
@@ -72,6 +73,7 @@ class ChessGame:
     def resume_game(self, pause_window):
         pause_window.destroy()  # 關閉暫停視窗
         self.game_window.focus_force()  # 確保主視窗回到焦點
+        self.canvas.bind("<Button-1>", self.handle_click_event)
         self.bind_keys() # 確保按鍵綁定仍有效
 
     def quit_game(self):
