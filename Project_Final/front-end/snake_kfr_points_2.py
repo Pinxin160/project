@@ -21,7 +21,7 @@ CELL_SIZE = 20
 FPS = 10
 
 # 顏色設定
-BG_COLOR = (0, 0, 0)
+BG_COLOR = (189, 205, 157)
 SNAKE_COLOR = (0, 255, 0)
 ITEMS = ["watermelon", "apple", "strawberry", "game"]
 
@@ -159,7 +159,7 @@ def draw_item(item):
     
 
     if item_type == "watermelon":
-        pygame.draw.circle(screen, (0, 255, 0), (item_x + CELL_SIZE, item_y + CELL_SIZE), CELL_SIZE)
+        pygame.draw.circle(screen, (0, 128, 0), (item_x + CELL_SIZE, item_y + CELL_SIZE), CELL_SIZE)
         pygame.draw.circle(screen, (255, 0, 0), (item_x + CELL_SIZE, item_y + CELL_SIZE), CELL_SIZE // 2)
     elif item_type == "apple":
         pygame.draw.circle(screen, (255, 0, 0), (item_x + int(CELL_SIZE * 0.75), item_y + int(CELL_SIZE * 0.75)), int(CELL_SIZE * 0.75))
@@ -173,14 +173,80 @@ def draw_item(item):
         pygame.draw.circle(screen, (0, 255, 0), (item_x + CELL_SIZE // 2, item_y), CELL_SIZE // 8)
     elif item_type == "game":
         pygame.draw.rect(screen, (255, 255, 0), (item_x, item_y, CELL_SIZE, CELL_SIZE))
+
 # 顯示遊戲開始畫面
+# 顏色設定
+# 顏色設定
+
+MORANDI_LIGHT_GREEN = (189, 205, 157)  # 莫蘭迪色系中的淺綠色
+BLUE = (70, 130, 180)  # 莫蘭迪風格的藍色
+WHITE = (255, 255, 255)  # 白色
+SNAKE_HEAD_COLOR = (50, 205, 50)  # 蛇頭顏色
+SNAKE_BODY_COLOR = (34, 139, 34)  # 蛇身顏色
+EYE_COLOR = (255, 255, 255)  # 眼睛顏色
+PUPIL_COLOR = (0, 0, 0)  # 瞳孔顏色
+# 繪製蛇的函數
+def draw_snake(x, y, snake_length, snake_direction):
+    # 繪製蛇頭
+    pygame.draw.circle(screen, SNAKE_HEAD_COLOR, (x + CELL_SIZE // 2, y + CELL_SIZE // 2), CELL_SIZE // 2)
+
+    # 繪製眼睛（白色眼珠）
+    eye_x, eye_y = x + CELL_SIZE // 2, y + CELL_SIZE // 2  # 基本位置
+    if snake_direction == "UP":
+        eye_y -= CELL_SIZE // 4
+    elif snake_direction == "DOWN":
+        eye_y += CELL_SIZE // 4
+    elif snake_direction == "LEFT":
+        eye_x -= CELL_SIZE // 4
+    elif snake_direction == "RIGHT":
+        eye_x += CELL_SIZE // 4
+    pygame.draw.circle(screen, EYE_COLOR, (eye_x, eye_y), CELL_SIZE // 5)
+    pygame.draw.circle(screen, PUPIL_COLOR, (eye_x, eye_y), CELL_SIZE // 8)  # 瞳孔
+
+    # 繪製蛇身體（簡單的圓形）
+    for i in range(1, snake_length):
+        if snake_direction == "RIGHT":
+            # 每一個蛇身節點都在蛇頭的右邊，依次排列
+            pygame.draw.circle(screen, SNAKE_BODY_COLOR, (x + CELL_SIZE * i + CELL_SIZE // 2, y + CELL_SIZE // 2), CELL_SIZE // 2)
+        elif snake_direction == "LEFT":
+            # 每一個蛇身節點都在蛇頭的左邊，依次排列
+            pygame.draw.circle(screen, SNAKE_BODY_COLOR, (x - CELL_SIZE * i + CELL_SIZE // 2, y + CELL_SIZE // 2), CELL_SIZE // 2)
+        elif snake_direction == "UP":
+            # 每一個蛇身節點都在蛇頭的上方，依次排列
+            pygame.draw.circle(screen, SNAKE_BODY_COLOR, (x + CELL_SIZE // 2, y - CELL_SIZE * i + CELL_SIZE // 2), CELL_SIZE // 2)
+        elif snake_direction == "DOWN":
+            # 每一個蛇身節點都在蛇頭的下方，依次排列
+            pygame.draw.circle(screen, SNAKE_BODY_COLOR, (x + CELL_SIZE // 2, y + CELL_SIZE * i + CELL_SIZE // 2), CELL_SIZE // 2)
+
+# 顯示開始畫面的函數
 def show_start_screen():
-    screen.fill(BG_COLOR)
-    font = pygame.font.SysFont(None, 65)
-    title_text = font.render("Welcome to Snake Game", True, (255, 255, 255))
-    instructions_text = pygame.font.SysFont(None, 45).render("Press ENTER to Start", True, (255, 255, 255))
-    screen.blit(title_text, (SCREEN_WIDTH // 2 - title_text.get_width() // 2, SCREEN_HEIGHT // 3))
-    screen.blit(instructions_text, (SCREEN_WIDTH // 2 - instructions_text.get_width() // 2, SCREEN_HEIGHT // 2))
+    # 填充背景色為莫蘭迪色系的淺綠色
+    screen.fill(MORANDI_LIGHT_GREEN)
+
+    # 顯示標題文字
+    font_title = pygame.font.SysFont("Comic Sans MS", 48, bold=True)
+    title_text = font_title.render("Welcome to Snake Game", True, BLUE)  # 藍色字體
+    screen.blit(
+        title_text,
+        (SCREEN_WIDTH // 2 - title_text.get_width() // 2, SCREEN_HEIGHT // 3),
+    )
+
+    # 顯示提示文字
+    font_instructions = pygame.font.SysFont("Comic Sans MS", 40, bold=False)
+    instructions_text = font_instructions.render(
+        "Press ENTER to Start", True, WHITE  # 白色字體使提示文字清晰
+    )
+    screen.blit(
+        instructions_text,
+        (
+            SCREEN_WIDTH // 2 - instructions_text.get_width() // 2,
+            SCREEN_HEIGHT // 2,
+        ),
+    )
+
+    # 在 "PRESS ENTER" 下方畫蛇
+    draw_snake(SCREEN_WIDTH // 2 - (5 * CELL_SIZE) // 2, SCREEN_HEIGHT // 2 + 100, 5, "RIGHT")
+    
     pygame.display.flip()
 
     # 等待玩家開始遊戲
@@ -192,20 +258,26 @@ def show_start_screen():
                 exit()
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 waiting = False
+
 # 遊戲結束畫面
-# 遊戲結束處理
+
 def game_over():
     global game_running
     draw_game_state()
+    
     font = pygame.font.SysFont(None, 72)
-    game_over_text = font.render("GAME OVER", True, (255, 0, 0))
+    
+    # 繪製 Game Over 字樣
+    game_over_text = font.render("GAME OVER", True,BLUE)  
     screen.blit(game_over_text, (SCREEN_WIDTH // 2 - game_over_text.get_width() // 2, SCREEN_HEIGHT // 3))
-    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    
+    # 繪製分數
+    score_text = font.render(f"Score: {score}", True, (186, 85, 211))  # 可愛的天藍色
     screen.blit(score_text, (SCREEN_WIDTH // 2 - score_text.get_width() // 2, SCREEN_HEIGHT // 2))
+    
     pygame.display.flip()
     pygame.time.wait(3000)
-    game_running = False  # 停止遊戲主循環
-
+    game_running = False
 
 
 
@@ -220,15 +292,36 @@ def reset_game():
     game_paused = False
     init_pygame()  # 確保每次重置遊戲都重新初始化 Pygame
 
-
-# 繪製遊戲狀態
 def draw_game_state():
     screen.fill(BG_COLOR)
-    for segment in snake:
-        pygame.draw.rect(screen, SNAKE_COLOR, (segment[0], segment[1], CELL_SIZE, CELL_SIZE))
+    
+    for i, segment in enumerate(snake):
+        x, y = segment
+        if i == 0:  # 蛇頭
+            # 繪製蛇頭
+            pygame.draw.circle(screen, (50, 205, 50), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), CELL_SIZE // 2)
+            
+            # 繪製眼睛（白色眼珠）
+            eye_x, eye_y = x + CELL_SIZE // 2, y + CELL_SIZE // 2  # 基本位置
+            if snake_direction == "UP":
+                eye_y -= CELL_SIZE // 4
+            elif snake_direction == "DOWN":
+                eye_y += CELL_SIZE // 4
+            elif snake_direction == "LEFT":
+                eye_x -= CELL_SIZE // 4
+            elif snake_direction == "RIGHT":
+                eye_x += CELL_SIZE // 4
+            pygame.draw.circle(screen, (255, 255, 255), (eye_x, eye_y), CELL_SIZE // 5)
+            pygame.draw.circle(screen, (0, 0, 0), (eye_x, eye_y), CELL_SIZE // 8)  # 瞳孔
+        else:  # 蛇身體
+            # 使用深綠色繪製身體
+            pygame.draw.circle(screen, (34, 139, 34), (x + CELL_SIZE // 2, y + CELL_SIZE // 2), CELL_SIZE // 2)
+    
+    # 繪製計分項目
     for item in items:
         draw_item(item)
 
+    # 顯示分數
     font = pygame.font.SysFont(None, 36)
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))
     screen.blit(score_text, (10, 10))
